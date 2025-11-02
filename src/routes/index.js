@@ -7,6 +7,7 @@ const CartController = require('../controllers/CartController');
 const CheckoutController = require('../controllers/CheckoutController');
 const OrderController = require('../controllers/OrderController');
 const LoyaltyController = require('../controllers/LoyaltyController');
+const ReviewController = require('../controllers/ReviewController');
 
 const auth = require('../middlewares/auth');
 
@@ -31,9 +32,12 @@ router.post('/checkout/pix', auth, CheckoutController.pix);
 router.post('/orders/:id/pay', auth, OrderController.confirmPayment);
 router.get('/orders/:id/status', auth, OrderController.status);
 router.post('/orders/:id/advance', auth, OrderController.advance);
-router.get('/orders', auth, OrderController.history);          // << histórico
+router.get('/orders', auth, OrderController.history);
 
 // Fidelidade
-router.get('/loyalty/summary', auth, LoyaltyController.summary); // << novo
+router.get('/loyalty/summary', auth, LoyaltyController.summary);
+
+// Reviews (pós-compra)
+router.post('/orders/:id/review', auth, ReviewController.create);
 
 module.exports = router;
