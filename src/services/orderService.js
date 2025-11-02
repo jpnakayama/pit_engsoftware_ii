@@ -1,4 +1,4 @@
-const { Order, OrderItem, Product, Sequelize } = require('../models');
+const { Order, OrderItem, Product, LoyaltyLedger, Sequelize } = require('../models');
 const { Op } = Sequelize;
 
 async function getOrCreateCart(userId) {
@@ -74,10 +74,69 @@ async function checkoutPix(userId, { delivery_type }) {
   return { order, subtotal, total, bonus, qrCode };
 }
 
+function calculateLoyaltyPoints(total_cents) {
+  // 1 ponto a cada R$10 => 1000 centavos
+  return Math.floor((total_cents || 0) / 1000);
+}
+
+async function confirmPayment(userId, orderId) {
+  const order = await Order.findOne({ where: { id: orderId, user_id: userId } });
+  if (!order) { const e = new Error('Pedido não encontrado'); e.status = 404; throw e; }
+  if (order.status !== 'awaiting_payment') { const e = new Error('Pedido não está aguardando pagamento'); e.status = 400; throw e; }
+
+  order.status = 'preparing';
+  order.paid_at = new Date();
+  await order.save();
+
+  // Lançar pontos de fidelidade
+  const points = calculateLoyaltyPoints(order.total_cents);
+  if (points > 0) {
+    await LoyaltyLedger.create({
+      user_id: userId,
+      points_delta: points,
+      reason: `Pedido #${order.id} pago`
+    });
+  }
+
+  return { order, points_awarded: points };
+}
+
+async function getOrderStatus(userId, orderId) {
+  const order = await Order.findOne({ where: { id: orderId, user_id: userId } });
+  if (!order) { const e = new Error('Pedido não encontrado'); e.status = 404; throw e; }
+  return { id: order.id, status: order.status, paid_at: order.paid_at, total_cents: order.total_cents };
+}
+
+// (opcional) avançar status manualmente
+async function advanceStatus(userId, orderId, nextStatus) {
+  const allowed = ['preparing','ready','delivered','canceled'];
+  if (!allowed.includes(nextStatus)) {
+    const e = new Error('Status inválido'); e.status = 400; throw e;
+  }
+  const order = await Order.findOne({ where: { id: orderId, user_id: userId } });
+  if (!order) { const e = new Error('Pedido não encontrado'); e.status = 404; throw e; }
+
+  // Regras simples de transição
+  const flow = {
+    awaiting_payment: ['preparing'],
+    preparing: ['ready','canceled'],
+    ready: ['delivered','canceled'],
+    delivered: [],
+    canceled: []
+  };
+  const canGo = flow[order.status] || [];
+  if (!canGo.includes(nextStatus)) {
+    const e = new Error(`Transição inválida: ${order.status} → ${nextStatus}`); e.status = 400; throw e;
+  }
+
+  order.status = nextStatus;
+  await order.save();
+  return { id: order.id, status: order.status };
+}
+
 module.exports = {
-  getOrCreateCart,
-  addItemToCart,
-  removeItemFromCart,
-  getCart,
-  checkoutPix
+  // já exportados antes:
+  getOrCreateCart, addItemToCart, removeItemFromCart, getCart, checkoutPix,
+  // novos:
+  confirmPayment, getOrderStatus, advanceStatus
 };

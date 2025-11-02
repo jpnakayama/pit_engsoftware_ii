@@ -5,6 +5,8 @@ const ProductController = require('../controllers/ProductController');
 const AuthController = require('../controllers/AuthController');
 const CartController = require('../controllers/CartController');
 const CheckoutController = require('../controllers/CheckoutController');
+const OrderController = require('../controllers/OrderController');
+const LoyaltyController = require('../controllers/LoyaltyController');
 
 const auth = require('../middlewares/auth');
 
@@ -14,15 +16,24 @@ router.get('/health', (req, res) => res.json({ status: 'ok' }));
 router.post('/auth/signup', AuthController.signup);
 router.post('/auth/login', AuthController.login);
 
-// Produtos (pública)
+// Produtos
 router.get('/products', ProductController.list);
 
-// Cart (protegido)
+// Carrinho
 router.post('/cart/items', auth, CartController.addItem);
 router.get('/cart', auth, CartController.list);
 router.delete('/cart/items/:id', auth, CartController.removeItem);
 
-// Checkout Pix (protegido)
+// Checkout
 router.post('/checkout/pix', auth, CheckoutController.pix);
+
+// Pedidos
+router.post('/orders/:id/pay', auth, OrderController.confirmPayment);
+router.get('/orders/:id/status', auth, OrderController.status);
+router.post('/orders/:id/advance', auth, OrderController.advance);
+router.get('/orders', auth, OrderController.history);          // << histórico
+
+// Fidelidade
+router.get('/loyalty/summary', auth, LoyaltyController.summary); // << novo
 
 module.exports = router;
