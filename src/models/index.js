@@ -4,7 +4,10 @@ const { Sequelize } = require('sequelize');
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = require('../config/database')[env];
 
-const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig);
+// Para SQLite, não precisa passar database, username e password separadamente
+const sequelize = dbConfig.storage 
+  ? new Sequelize(dbConfig)
+  : new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig);
 const db = {};
 
 fs.readdirSync(__dirname)
