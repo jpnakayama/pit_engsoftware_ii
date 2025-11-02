@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(express.static('src/public'));
 app.use('/', routes);
 
 // Error handler (deve ser o último middleware)
