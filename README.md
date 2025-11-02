@@ -15,12 +15,13 @@ Repositório do projeto da disciplina (PIT II). Fluxo essencial de compra com **
 
 
 ## Documentação
-- [`docs/backlog.md`](docs/backlog.md) — **Escopo + MVP + DoD** (histórias, critérios, fluxo do MVP).
-- [`docs/dic-dados.md`](docs/dic-dados.md) — **Dicionário de dados** (campos, tipos, regras e restrições).
-- [`docs/uml/`](docs/uml/) — Casos de uso, classes e/ou sequência (revisados).
-- [`docs/wireframes/`](docs/wireframes/) — Telas essenciais (rascunhos/links).
-- [`docs/plano-testes.md`](docs/plano-testes.md) — Plano de testes (unit + integração + testes com colegas).
-- [`docs/evidencias/`](docs/evidencias/) — Prints do sistema e resultados de testes.
+- **One-pager:** docs/onepager.md
+- **UML (classes):** docs/uml/diagrama-classes.md
+- **UML (casos de uso):** docs/uml/casos-uso.md
+- **DER:** docs/uml/der.md
+- **IHC Protótipos:** docs/ihc/prototipos/README.md
+- **Mapa de Navegação:** docs/ihc/fluxos/mapa-navegacao.md
+- **Mensagens de Erro:** docs/ihc/mensagens-erro.md
 
 
 ## Como rodar (exemplo com Node.js)

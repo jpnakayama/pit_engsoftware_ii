@@ -1,67 +1,78 @@
-# Dicionário de Dados — App da Loja de Cupcakes
+# Dicionário de Dados — App Loja de Cupcakes
 
+> **Origem (migration):** arquivo em `db/migrations/*` correspondente  
+> **Validações/Regra:** regras de negócio aplicadas na API/serviços
 
-> Convenções: `*_id` chaves estrangeiras; `*_cents` valores monetários em centavos; timestamps ISO.
+## Tabela: users
+| Campo          | Tipo     | Nulo | Origem (migration)                  | Validações/Regra                    |
+|----------------|----------|------|-------------------------------------|-------------------------------------|
+| id (PK)        | INTEGER  | não  | 20251101-001-create-users.js        | autoincremento                      |
+| name           | TEXT     | não  | idem                                | —                                   |
+| email          | TEXT     | não  | idem                                | único                               |
+| password_hash  | TEXT     | não  | idem                                | hash de senha (bcrypt)              |
+| created_at     | DATE     | sim  | idem                                | default NOW                         |
+| updated_at     | DATE     | sim  | idem                                | —                                   |
 
+## Tabela: products
+| Campo                 | Tipo     | Nulo | Origem (migration)                     | Validações/Regra                       |
+|-----------------------|----------|------|----------------------------------------|----------------------------------------|
+| id (PK)               | INTEGER  | não  | 20251101-002-create-products.js        | autoincremento                         |
+| name                  | TEXT     | não  | idem                                   | —                                      |
+| description           | TEXT     | sim  | idem                                   | —                                      |
+| price_cents           | INTEGER  | não  | idem                                   | ≥ 0                                    |
+| is_ready_now          | BOOLEAN  | sim  | idem (default false)                   | —                                      |
+| is_cupcake_of_month   | BOOLEAN  | sim  | idem (default false)                   | —                                      |
+| month_discount_percent| INTEGER  | sim  | idem (default 0)                       | 0..100                                 |
+| image_url             | TEXT     | sim  | idem                                   | URL opcional                           |
+| created_at            | DATE     | sim  | idem                                   | default NOW                            |
+| updated_at            | DATE     | sim  | idem                                   | —                                      |
 
-## Tabela: `users`
-| Campo | Tipo | Nulável | Descrição | Regras |
-|----------------|----------|---------|-------------------------------------------|--------|
-| id | SERIAL PK| não | Identificador do usuário | único |
-| name | TEXT | não | Nome completo | |
-| email | TEXT | não | E-mail | único |
-| password_hash | TEXT | não | Hash da senha | |
-| created_at | TIMESTAMP| sim | Criação | default NOW() |
+## Tabela: orders
+| Campo          | Tipo     | Nulo | Origem (migration)                     | Validações/Regra                                                   |
+|----------------|----------|------|----------------------------------------|--------------------------------------------------------------------|
+| id (PK)        | INTEGER  | não  | 20251102-001-create-orders.js          | autoincremento                                                     |
+| user_id (FK)   | INTEGER  | não  | idem                                   | → users.id (CASCADE)                                               |
+| status         | ENUM     | não  | idem                                   | 'created','awaiting_payment','preparing','ready','delivered','canceled' |
+| delivery_type  | ENUM     | sim  | idem                                   | 'retirada','delivery'                                              |
+| bonus_cents    | INTEGER  | não  | idem (default 0)                       | 200 se retirada, senão 0                                           |
+| total_cents    | INTEGER  | sim  | idem                                   | calculado no checkout                                              |
+| paid_at        | DATE     | sim  | 20251102-003-add-paid-at-to-orders.js  | setado na confirmação de pagamento                                 |
+| created_at     | DATE     | sim  | 20251102-001-create-orders.js          | default NOW                                                        |
+| updated_at     | DATE     | sim  | idem                                   | —                                                                  |
 
+## Tabela: order_items
+| Campo             | Tipo     | Nulo | Origem (migration)                       | Validações/Regra                |
+|-------------------|----------|------|------------------------------------------|---------------------------------|
+| id (PK)           | INTEGER  | não  | 20251102-002-create-order-items.js       | autoincremento                  |
+| order_id (FK)     | INTEGER  | não  | idem                                     | → orders.id (CASCADE)           |
+| product_id (FK)   | INTEGER  | não  | idem                                     | → products.id (RESTRICT)        |
+| quantity          | INTEGER  | não  | idem                                     | ≥ 1                             |
+| unit_price_cents  | INTEGER  | não  | idem                                     | copia do preço no momento       |
+| note              | TEXT     | sim  | idem                                     | —                               |
+| created_at        | DATE     | sim  | idem                                     | default NOW                     |
+| updated_at        | DATE     | sim  | idem                                     | —                               |
 
-## Tabela: `products`
-| Campo | Tipo | Nulável | Descrição | Regras |
-|------------------------|-----------|---------|---------------------------------------------|--------|
-| id | SERIAL PK | não | Produto | |
-| name | TEXT | não | Nome | |
-| description | TEXT | sim | Descrição | |
-| price_cents | INTEGER | não | Preço em centavos | >0 |
-| is_ready_now | BOOLEAN | sim | Disponível imediato | default false |
-| is_cupcake_of_month | BOOLEAN | sim | Destaque mês | default false |
-| month_discount_percent | INTEGER | sim | % desconto “do mês” | 0–100 |
-| image_url | TEXT | sim | URL imagem | |
+## Tabela: loyalty_ledger
+| Campo         | Tipo     | Nulo | Origem (migration)                         | Validações/Regra                          |
+|---------------|----------|------|--------------------------------------------|-------------------------------------------|
+| id (PK)       | INTEGER  | não  | 20251102-004-create-loyalty-ledger.js      | autoincremento                             |
+| user_id (FK)  | INTEGER  | não  | idem                                       | → users.id (CASCADE)                      |
+| points_delta  | INTEGER  | não  | idem                                       | pode ser positivo/negativo; aqui só +     |
+| reason        | TEXT     | sim  | idem                                       | descritivo                                 |
+| created_at    | DATE     | sim  | idem                                       | default NOW                                |
+| updated_at    | DATE     | sim  | idem                                       | —                                          |
 
+## Tabela: reviews
+| Campo        | Tipo     | Nulo | Origem (migration)                       | Validações/Regra                                 |
+|--------------|----------|------|------------------------------------------|--------------------------------------------------|
+| id (PK)      | INTEGER  | não  | 20251102-005-create-reviews.js           | autoincremento                                   |
+| order_id (FK)| INTEGER  | não  | idem                                     | → orders.id (CASCADE); 1 review por pedido       |
+| rating       | INTEGER  | não  | idem                                     | 1..5                                             |
+| comment      | TEXT     | sim  | idem                                     | —                                                |
+| created_at   | DATE     | sim  | idem                                     | default NOW                                      |
+| updated_at   | DATE     | sim  | idem                                     | —                                                |
 
-## Tabela: `orders`
-| Campo | Tipo | Nulável | Descrição | Regras |
-|---------------|-----------|---------|-------------------------------------------|--------|
-| id | SERIAL PK | não | Pedido | |
-| user_id | INTEGER FK| sim | → `users.id` | |
-| status | TEXT | não | created/awaiting_payment/preparing/ready/delivered/canceled | CHECK |
-| delivery_type | TEXT | não | retirada/delivery | CHECK |
-| bonus_cents | INTEGER | sim | Bônus por retirada | default 0 |
-| total_cents | INTEGER | não | Total do pedido (centavos) | >0 |
-| created_at | TIMESTAMP | sim | Criação | default NOW() |
-| paid_at | TIMESTAMP | sim | Pagamento confirmado | |
-
-
-## Tabela: `order_items`
-| Campo | Tipo | Nulável | Descrição | Regras |
-|-----------------|-----------|---------|----------------------|--------|
-| id | SERIAL PK | não | Item do pedido | |
-| order_id | INTEGER FK| não | → `orders.id` | ON DELETE CASCADE |
-| product_id | INTEGER FK| não | → `products.id` | |
-| quantity | INTEGER | não | Quantidade | >0 |
-| unit_price_cents| INTEGER | não | Preço unitário (¢) | >0 |
-| note | TEXT | sim | Observação opcional | |
-
-
-## Tabela: `addresses`
-| Campo | Tipo | Nulável | Descrição | Regras |
-|-----------|-----------|---------|----------|--------|
-| id | SERIAL PK | não | Endereço | |
-| user_id | INTEGER FK| não | → `users.id` | |
-| cep | TEXT | sim | CEP | |
-| street | TEXT | sim | Rua | |
-| number | TEXT | sim | Número | |
-| complement| TEXT | sim | Comp. | |
-| city | TEXT | sim | Cidade | |
-| state | TEXT | sim | UF | |
-
-
-- **Bônus retirada**: desconto fixo aplicado quando `delivery_type='retirada'`.
+## Checklist de consistência
+- [ ] Dicionário = migrations (nomes/colunas/enum).  
+- [ ] FKs/PKs documentadas.  
+- [ ] Regras de negócio refletidas (bônus, pontos, status, review).

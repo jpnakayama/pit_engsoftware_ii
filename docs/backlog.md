@@ -50,3 +50,5 @@ Construir o fluxo essencial para o cliente comprar cupcakes com **retirada na lo
 - Campo nome, e‑mail único, senha (mín. 8; hash no backend).
 - Validações de formato; mensagens claras de erro.
 - **H09 (opcional)** → `reviews` → `/orders/:id/review` → testes integração review.
+
+> Consulte também o **One-pager do projeto**: ../onepager.md
