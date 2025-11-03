@@ -8,7 +8,8 @@
     "start": "node src/app.js",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:seed": "npx sequelize-cli db:seed:all",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "seed:dev": "node scripts/seed-dev.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

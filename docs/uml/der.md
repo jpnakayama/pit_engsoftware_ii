@@ -1,5 +1,29 @@
 # DER — App Loja de Cupcakes
 
+> **Delta ES I → ES II (DER)**
+> **Resumo:** o esquema foi alinhado às FKs, PKs e integridades praticadas no banco (Sequelize).
+
+### Adições
+- **Tabela `order_items`** com FKs: (`order_id` → `orders.id` CASCADE) e (`product_id` → `products.id` RESTRICT).
+- **Tabela `loyalty_ledger`** (`user_id` → `users.id` CASCADE).
+- **Tabela `reviews`** (`order_id` → `orders.id` CASCADE) com unicidade lógica “1 review por pedido”.
+
+### Alterações de Integridade
+- **orders.user_id**: `CASCADE` em delete/update.
+- **order_items.order_id**: `CASCADE`; **product_id**: `RESTRICT` (evita apagar produto referenciado).
+- **reviews.order_id**: `CASCADE`.
+- **ENUMs** materializados: `orders.status`, `orders.delivery_type`.
+
+### Campos/Restrições consolidadas
+- `orders.status` segue o fluxo definido (ver Classes).
+- `orders.bonus_cents` e `orders.total_cents` calculados no checkout.
+- `users.email` **único**.
+- Nulabilidades definidas conforme migrations (ex.: `comment` em `reviews` é opcional).
+
+### Remoções / Fora do escopo (agora)
+- Tabelas para logística/entrega real, resgate de pontos, catálogo avançado.
+
+
 > (Quando o PNG estiver pronto, insira aqui:)
 > **Figura 3 — Diagrama Entidade-Relacionamento**
 > ![der](./der.png)

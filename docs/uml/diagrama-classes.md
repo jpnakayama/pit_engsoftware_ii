@@ -1,5 +1,40 @@
 # Diagrama de Classes — App Loja de Cupcakes
 
+> **Delta ES I → ES II (Diagrama de Classes)**
+> **Resumo:** o modelo foi enxugado para refletir o MVP implementado e alinhado às migrations reais.
+
+### Adições
+- **OrderItem** (explícito): guarda `quantity` e `unit_price_cents` congelados no momento da compra.
+- **LoyaltyLedger**: histórico de pontos (ganhos/ajustes) por `user_id`.
+- **Review** (1–0..1 por pedido): `rating (1..5)` + `comment`.
+
+### Alterações
+- **Order**
+  - Novo `status` com ciclo: `awaiting_payment → preparing → ready → delivered | canceled`.
+  - `delivery_type` (`retirada`|`delivery`) e **`bonus_cents`** (bônus fixo na retirada).
+  - `total_cents` e `paid_at` definidos durante checkout/pagamento.
+- **Product**
+  - Campos para vitrine mínima: `is_cupcake_of_month`, `month_discount_percent`, `image_url` (opcional).
+- **User**
+  - Campos mínimos de auth (`name`, `email` único, `password_hash`).
+
+### Remoções / Fora do escopo (agora)
+- Entidades auxiliares não usadas no MVP (ex.: catálogo avançado, estoque, chat, notificações).
+- Regras de resgate/uso de pontos (mantidas como futuro).
+
+### Relacionamentos consolidados
+- `User 1—N Order`
+- `Order 1—N OrderItem`
+- `OrderItem N—1 Product`
+- `User 1—N LoyaltyLedger`
+- `Order 1—0..1 Review`
+
+### Regras relevantes (refinadas)
+- **Bônus retirada:** `delivery_type='retirada'` ⇒ `bonus_cents=200`.
+- **Pontos:** `floor(total_cents/1000)` (1 ponto a cada R$10), lançados no **pagamento**.
+- **Avaliação:** permitida só com `status in (ready, delivered)`; **uma** por pedido.
+
+
 > (Quando o PNG estiver pronto, insira aqui:)
 > **Figura 1 — Diagrama de Classes**
 > ![diagrama-classes](./diagrama-classes.png)

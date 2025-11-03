@@ -1,5 +1,24 @@
 # Casos de Uso — App Loja de Cupcakes
 
+> **Delta ES I → ES II (Casos de Uso)**
+> **Resumo:** focamos em 3 UCs nucleares do MVP; fluxos e regras batem 1:1 com a implementação.
+
+### Escopo consolidado (mantidos/ajustados)
+- **UC1 — Realizar Compra (Pix simulado):** vitrine → carrinho → checkout (`delivery_type`) → `Order(awaiting_payment)` → pagar (simulado) → avançar status.
+- **UC2 — Fidelidade (acumular pontos):** pontos lançados **no pagamento** do pedido: `floor(total_cents/1000)`.
+- **UC3 — Avaliação pós-compra:** 1 avaliação por pedido, permitida apenas em `ready` ou `delivered`.
+
+### Regras incorporadas no fluxo
+- **Bônus de retirada:** aplicado no checkout (`bonus_cents` = 200).
+- **Transições válidas:** `awaiting_payment → preparing → ready → delivered | canceled`.
+- **Bloqueios:** segunda avaliação do mesmo pedido retorna erro (409).
+
+### Itens postergados / fora do MVP
+- Resgate/uso de pontos em compra futura.
+- Integração com gateway Pix real / logística real.
+- Telas/funcionalidades administrativas.
+
+
 > (Quando o PNG estiver pronto, insira aqui:)
 > **Figura 2 — Diagrama de Casos de Uso (UC1, UC2, UC3)**
 > ![casos-uso](./casos-uso.png)
