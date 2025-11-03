@@ -27,3 +27,7 @@ Este documento comprova a execução dos testes automatizados do projeto, inclui
 1. Instalar dependências:
    ```bash
    npm install
+
+2. Executar a captura:
+   chmod +x scripts/capture-tests.sh
+   ./scripts/capture-tests.sh
