@@ -29,3 +29,9 @@ Este documento comprova execuções de testes com saída e cobertura versionadas
 | Data/Hora (BRT) | Commit | Suites | Tests | Lines | Obs. |
 |---|---|---|---|---|---|
 | 20251102-224911 | 60b650c | 6 | 9 | — | Execução automatizada |
+
+---
+
+Comando executado:
+    chmod +x scripts/capture-tests.sh
+    ./scripts/capture-tests.sh
