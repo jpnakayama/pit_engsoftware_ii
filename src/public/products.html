@@ -2,62 +2,388 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Vitrine — Cupcakes</title>
+  <title>Produtos — Cupcakes do JP</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='12' y='25' width='16' height='8' fill='%239d4edd'/%3E%3Crect x='8' y='20' width='24' height='8' fill='%234361ee'/%3E%3Crect x='6' y='16' width='28' height='6' fill='%2348cae4'/%3E%3Crect x='4' y='12' width='32' height='6' fill='%2352b788'/%3E%3Crect x='2' y='8' width='36' height='6' fill='%23ffd60a'/%3E%3Crect x='18' y='4' width='4' height='6' fill='%23e63946'/%3E%3C/svg%3E">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
   <script src="app.js"></script>
 </head>
 <body>
-  <nav class="navbar navbar-light bg-light mb-3 px-3">
-    <a class="navbar-brand" href="products.html">Cupcakes</a>
-    <div class="ms-auto">
-      <a class="btn btn-outline-primary btn-sm me-2" href="cart.html">Carrinho</a>
-      <a class="btn btn-outline-secondary btn-sm me-2" href="loyalty.html">Fidelidade</a>
-      <a class="btn btn-primary btn-sm" href="login.html">Login</a>
-    </div>
-  </nav>
+  <script>
+    document.write(getMenuHTML('products'));
+  </script>
 
-  <div class="container">
-    <h3>Vitrine</h3>
-    <div class="form-check form-switch my-2">
-      <input class="form-check-input" type="checkbox" id="onlyMonth">
-      <label class="form-check-label" for="onlyMonth">Somente “Cupcake do Mês”</label>
+  <!-- Seção Especial - Cupcake do Mês -->
+  <div class="featured-section">
+    <h2 class="featured-title">CUPCAKE DO MÊS</h2>
+    <div id="featured-product" class="featured-card-container">
+      <!-- Conteúdo será carregado via JavaScript -->
     </div>
-    <div id="grid" class="row g-3"></div>
+  </div>
+
+  <!-- Seção de produtos -->
+  <div class="page-container">
+    <div class="page-section">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title mb-0">Produtos</h2>
+        <div class="d-flex align-items-center gap-3">
+          <span id="products-count" class="text-muted"></span>
+          <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="view-mode" id="view-grid" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="view-grid">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 4px;">
+                <path d="M2 2h4v4H2V2zm0 6h4v4H2V8zm6-6h4v4H8V2zm0 6h4v4H8V8z"/>
+              </svg>
+              Grid
+            </label>
+            <input type="radio" class="btn-check" name="view-mode" id="view-details" autocomplete="off">
+            <label class="btn btn-outline-primary" for="view-details">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 4px;">
+                <path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2zm0 4h12v2H2v-2z"/>
+              </svg>
+              Detalhes
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Filtro e Ordenação -->
+      <div class="mb-4 d-flex flex-wrap gap-3 align-items-end">
+        <div>
+          <label for="filter-dropdown" class="form-label">Filtrar:</label>
+          <select id="filter-dropdown" class="form-select" style="min-width: 200px;">
+            <option value="all">Todos os produtos</option>
+            <option value="month">Cupcakes do Mês</option>
+            <option value="regular">Produtos regulares</option>
+          </select>
+        </div>
+        <div>
+          <label for="sort-dropdown" class="form-label">Ordenar por:</label>
+          <select id="sort-dropdown" class="form-select" style="min-width: 200px;">
+            <option value="name_asc">Nome (A-Z)</option>
+            <option value="name_desc">Nome (Z-A)</option>
+            <option value="price_asc">Preço (Menor → Maior)</option>
+            <option value="price_desc">Preço (Maior → Menor)</option>
+            <option value="month_first">Cupcakes do Mês primeiro</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Modo Grid -->
+      <div id="products-grid-view" class="products-grid-view"></div>
+      
+      <!-- Modo Detalhes -->
+      <div id="products-details-view" class="products-details-view" style="display: none;"></div>
+    </div>
   </div>
 
   <script>
-    async function load() {
-      const only = document.getElementById('onlyMonth').checked ? 'true' : 'false';
-      const data = await api(`/products?only_month=${only}`);
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      data.items.forEach(p => {
-        const col = document.createElement('div'); col.className = 'col-12 col-md-4';
-        col.innerHTML = `
-          <div class="card h-100">
-            <div class="card-body">
-              <h5>${p.name}</h5>
-              <p class="text-muted">${p.description || ''}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <strong>${fmtBRL(p.price_cents)}</strong>
-                <button class="btn btn-sm btn-primary" data-id="${p.id}">Adicionar</button>
-              </div>
+    let allProducts = [];
+
+    // Função para adicionar produto ao carrinho
+    function addToCart(id) {
+      if (!getToken()) { 
+        alert('Faça login para adicionar produtos ao carrinho.'); 
+        return location.href = 'login.html'; 
+      }
+      
+      api('/cart/items', { method: 'POST', body: JSON.stringify({ product_id: id, quantity: 1 }) })
+        .then(() => {
+          alert('Produto adicionado ao carrinho!');
+        })
+        .catch(err => {
+          alert('Erro ao adicionar produto: ' + err.message);
+        });
+    }
+
+    // Carregar cupcake do mês (apenas um)
+    async function loadFeaturedProduct() {
+      const data = await api('/products?only_month=true&limit=1');
+      
+      if (data.items.length === 0) {
+        document.querySelector('.featured-section').style.display = 'none';
+        return;
+      }
+      
+      const product = data.items[0];
+      const container = document.getElementById('featured-product');
+      
+      const discountBadge = product.month_discount_percent ? 
+        `<span class="featured-discount-badge">${product.month_discount_percent}% OFF</span>` : '';
+      const monthBadge = '<span class="featured-month-badge">CUPCAKE DO MÊS</span>';
+      const productImage = product.image_url || `https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=600&h=400&fit=crop&auto=format`;
+      const detailsText = product.details || product.description || 'Sem descrição detalhada disponível.';
+      
+      container.innerHTML = `
+        <div class="featured-card">
+          ${discountBadge}
+          ${monthBadge}
+          <div class="featured-card-image">
+            <img src="${productImage}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x400/f0f0f0/999999?text=Cupcake'">
+          </div>
+          <div class="featured-card-content">
+            <h3 class="featured-card-title">${product.name.toUpperCase()}</h3>
+            <p class="featured-card-short">${product.description || ''}</p>
+            <p class="featured-card-details">${detailsText}</p>
+            <div class="featured-card-footer">
+              <div class="featured-price">${fmtBRL(product.price_cents)}</div>
+              <button class="btn-featured-add" onclick="addToCart(${product.id})">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                ADICIONAR AO CARRINHO
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Aplicar ordenação
+    function sortProducts(products) {
+      const sortValue = document.getElementById('sort-dropdown')?.value || 'name_asc';
+      const sortedProducts = [...products];
+      
+      switch (sortValue) {
+        case 'name_asc':
+          sortedProducts.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+          break;
+        case 'name_desc':
+          sortedProducts.sort((a, b) => b.name.localeCompare(a.name, 'pt-BR'));
+          break;
+        case 'price_asc':
+          sortedProducts.sort((a, b) => a.price_cents - b.price_cents);
+          break;
+        case 'price_desc':
+          sortedProducts.sort((a, b) => b.price_cents - a.price_cents);
+          break;
+        case 'month_first':
+          sortedProducts.sort((a, b) => {
+            if (a.is_cupcake_of_month && !b.is_cupcake_of_month) return -1;
+            if (!a.is_cupcake_of_month && b.is_cupcake_of_month) return 1;
+            return a.name.localeCompare(b.name, 'pt-BR');
+          });
+          break;
+      }
+      
+      return sortedProducts;
+    }
+
+    // Aplicar filtro e ordenação
+    function applyFilter() {
+      const filterValue = document.getElementById('filter-dropdown')?.value || 'all';
+      let filteredProducts = window.allProductsData || [];
+      
+      if (filterValue === 'month') {
+        filteredProducts = filteredProducts.filter(p => p.is_cupcake_of_month);
+      } else if (filterValue === 'regular') {
+        filteredProducts = filteredProducts.filter(p => !p.is_cupcake_of_month);
+      }
+      
+      // Remove duplicatas baseado no ID
+      const uniqueProducts = [];
+      const seenIds = new Set();
+      filteredProducts.forEach(p => {
+        if (!seenIds.has(p.id)) {
+          seenIds.add(p.id);
+          uniqueProducts.push(p);
+        }
+      });
+      
+      // Aplica ordenação
+      const sortedProducts = sortProducts(uniqueProducts);
+      
+      renderGridView(sortedProducts);
+      renderDetailsView(sortedProducts);
+      
+      // Atualiza contador
+      const countEl = document.getElementById('products-count');
+      if (countEl) {
+        countEl.textContent = `${sortedProducts.length} produto(s)`;
+      }
+    }
+
+    // Renderizar modo Grid
+    function renderGridView(products) {
+      const gridView = document.getElementById('products-grid-view');
+      gridView.innerHTML = '';
+      
+      if (products.length === 0) {
+        gridView.innerHTML = '<p class="text-center text-muted">Nenhum produto encontrado</p>';
+        return;
+      }
+      
+      const grid = document.createElement('div');
+      grid.className = 'products-grid';
+      
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card-modern';
+        
+        const discountBadge = p.is_cupcake_of_month && p.month_discount_percent ? 
+          `<span class="discount-badge-card">${p.month_discount_percent}% OFF</span>` : '';
+        const monthBadge = p.is_cupcake_of_month ? 
+          '<span class="month-badge-card">CUPCAKE DO MÊS</span>' : '';
+        
+        const productImage = p.image_url || `https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=400&h=300&fit=crop&auto=format`;
+        
+        card.innerHTML = `
+          ${discountBadge}
+          ${monthBadge}
+          <div class="product-card-image-modern">
+            <img src="${productImage}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/400x300/f0f0f0/999999?text=Cupcake'">
+          </div>
+          <div class="product-card-content-modern">
+            <h5>${p.name.toUpperCase()}</h5>
+            <p class="product-description-modern">${p.description || ''}</p>
+            <div class="product-footer-modern">
+              <span class="price-modern">${fmtBRL(p.price_cents)}</span>
+              <button class="btn-add-modern" onclick="addToCart(${p.id})">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                ADICIONAR
+              </button>
             </div>
           </div>`;
-        grid.appendChild(col);
+        grid.appendChild(card);
       });
-      grid.querySelectorAll('button.btn-primary').forEach(btn => {
-        btn.addEventListener('click', async (ev) => {
-          if (!getToken()) { alert('Faça login para adicionar.'); return location.href = 'login.html'; }
-          const id = Number(ev.currentTarget.getAttribute('data-id'));
-          await api('/cart/items', { method: 'POST', body: JSON.stringify({ product_id: id, quantity: 1 }) });
-          alert('Adicionado ao carrinho!');
-        });
+      
+      gridView.appendChild(grid);
+    }
+
+    // Renderizar modo Detalhes
+    function renderDetailsView(products) {
+      const detailsView = document.getElementById('products-details-view');
+      detailsView.innerHTML = '';
+      
+      if (products.length === 0) {
+        detailsView.innerHTML = '<p class="text-center text-muted">Nenhum produto encontrado</p>';
+        return;
+      }
+      
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-detail-card';
+        
+        const discountBadge = p.is_cupcake_of_month && p.month_discount_percent ? 
+          `<span class="badge bg-danger me-2">${p.month_discount_percent}% OFF</span>` : '';
+        const monthBadge = p.is_cupcake_of_month ? 
+          '<span class="badge bg-warning text-dark me-2">CUPCAKE DO MÊS</span>' : '';
+        
+        const detailsText = p.details || p.description || 'Sem descrição detalhada disponível.';
+        
+        card.innerHTML = `
+          <div class="product-detail-content">
+            <div class="product-detail-info">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <h4 class="mb-0">${p.name}</h4>
+                ${monthBadge}
+                ${discountBadge}
+              </div>
+              <p class="product-detail-short">${p.description || 'Sem descrição disponível.'}</p>
+              <p class="product-detail-description">${detailsText}</p>
+            </div>
+            <div class="product-detail-actions">
+              <div class="product-detail-price">${fmtBRL(p.price_cents)}</div>
+              <button class="btn btn-primary" onclick="addToCart(${p.id})">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+                  <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Adicionar
+              </button>
+            </div>
+          </div>`;
+        detailsView.appendChild(card);
       });
     }
-    document.getElementById('onlyMonth').addEventListener('change', load);
-    load();
+
+    // Carregar produtos
+    async function loadProducts() {
+      const gridView = document.getElementById('products-grid-view');
+      const detailsView = document.getElementById('products-details-view');
+      
+      gridView.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+      
+      try {
+        let products = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+          const data = await api(`/products?limit=100&page=${page}`);
+          
+          if (data.items.length === 0) {
+            hasMore = false;
+            break;
+          }
+          
+          products = [...products, ...data.items];
+          
+          const totalPages = Math.ceil(data.total / data.limit);
+          if (page >= totalPages) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        }
+        
+        // Remove duplicatas baseado no ID antes de armazenar
+        const uniqueProductsMap = new Map();
+        products.forEach(p => {
+          if (!uniqueProductsMap.has(p.id)) {
+            uniqueProductsMap.set(p.id, p);
+          }
+        });
+        
+        // Inclui todos os produtos, incluindo o cupcake do mês (aparece na seção especial E na lista)
+        allProducts = Array.from(uniqueProductsMap.values());
+        
+        // Armazena todos os produtos para filtro
+        window.allProductsData = allProducts;
+        
+        // Renderiza ambos os modos
+        applyFilter();
+        
+        // Toggle entre modos
+        document.querySelectorAll('input[name="view-mode"]').forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            if (e.target.id === 'view-grid') {
+              gridView.style.display = 'block';
+              detailsView.style.display = 'none';
+            } else {
+              gridView.style.display = 'none';
+              detailsView.style.display = 'block';
+            }
+          });
+        });
+        
+        // Filtro dropdown
+        const filterDropdown = document.getElementById('filter-dropdown');
+        if (filterDropdown) {
+          filterDropdown.addEventListener('change', () => {
+            applyFilter();
+          });
+        }
+        
+        // Ordenação dropdown
+        const sortDropdown = document.getElementById('sort-dropdown');
+        if (sortDropdown) {
+          sortDropdown.addEventListener('change', () => {
+            applyFilter();
+          });
+        }
+        
+      } catch (err) {
+        console.error('Erro ao carregar produtos:', err);
+        gridView.innerHTML = '<p class="text-center text-danger">Erro ao carregar produtos. Por favor, recarregue a página.</p>';
+      }
+    }
+
+    // Inicializar
+    loadFeaturedProduct();
+    loadProducts();
   </script>
 </body>
 </html>

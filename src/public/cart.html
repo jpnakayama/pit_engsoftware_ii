@@ -2,37 +2,55 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Carrinho — Cupcakes</title>
+  <title>Carrinho — Cupcakes do JP</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='12' y='25' width='16' height='8' fill='%239d4edd'/%3E%3Crect x='8' y='20' width='24' height='8' fill='%234361ee'/%3E%3Crect x='6' y='16' width='28' height='6' fill='%2348cae4'/%3E%3Crect x='4' y='12' width='32' height='6' fill='%2352b788'/%3E%3Crect x='2' y='8' width='36' height='6' fill='%23ffd60a'/%3E%3Crect x='18' y='4' width='4' height='6' fill='%23e63946'/%3E%3C/svg%3E">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
   <script src="app.js"></script>
 </head>
 <body>
-  <nav class="navbar navbar-light bg-light mb-3 px-3">
-    <a class="navbar-brand" href="products.html">Cupcakes</a>
-  </nav>
+  <script>
+    document.write(getMenuHTML('cart'));
+  </script>
 
-  <div class="container">
-    <h3>Seu Carrinho</h3>
-    <div class="table-responsive">
-      <table class="table" id="tb">
-        <thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+  <div class="page-container">
+    <div class="page-section">
+      <h2 class="page-title">Seu Carrinho</h2>
+      <div class="table-responsive">
+        <table class="table table-hover" id="tb">
+          <thead class="table-light"><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="cart-summary">
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+          <h4 class="mb-0">Subtotal:</h4>
+          <h4 class="mb-0 text-primary" id="subtotal">R$ 0,00</h4>
+        </div>
+
+        <div class="mt-4 pt-3 border-top">
+          <label class="form-label fw-bold mb-2">Tipo de entrega:</label>
+          <div class="d-flex gap-3 align-items-center flex-wrap">
+            <select class="form-select" style="max-width: 300px;" id="delivery">
+              <option value="retirada">Retirada (Bônus R$ 2,00)</option>
+              <option value="delivery">Delivery</option>
+            </select>
+            <button class="btn btn-success btn-lg" id="btnCheckout">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+              Checkout Pix
+            </button>
+          </div>
+        </div>
+
+        <div id="pix" class="mt-4 p-4 bg-light rounded border" style="display: none;"></div>
+      </div>
     </div>
-
-    <h5>Subtotal: <span id="subtotal">R$ 0,00</span></h5>
-
-    <div class="my-3">
-      <label class="form-label me-2">Tipo de entrega:</label>
-      <select class="form-select w-auto d-inline" id="delivery">
-        <option value="retirada">Retirada (Bônus R$ 2,00)</option>
-        <option value="delivery">Delivery</option>
-      </select>
-      <button class="btn btn-success ms-2" id="btnCheckout">Checkout Pix</button>
-    </div>
-
-    <pre id="pix" class="bg-light p-3"></pre>
   </div>
 
   <script>
@@ -61,18 +79,23 @@
       document.getElementById('subtotal').innerText = fmtBRL(c.subtotal);
     }
 
-    document.getElementById('btnCheckout').addEventListener('click', async () => {
+      document.getElementById('btnCheckout').addEventListener('click', async () => {
       const delivery_type = document.getElementById('delivery').value;
       const out = await api('/checkout/pix', { method: 'POST', body: JSON.stringify({ delivery_type }) });
-      document.getElementById('pix').innerText =
-`Pedido #${out.order_id}
-Status: ${out.status}
-Subtotal: ${fmtBRL(out.subtotal_cents)}
-Bônus: ${fmtBRL(out.bonus_cents)}
-Total: ${fmtBRL(out.total_cents)}
-QR: ${out.qrCode}
-→ Agora vá para a página do Pedido para pagar (simulado).`;
-      setTimeout(() => location.href = 'order.html?id=' + out.order_id, 1200);
+      const pixDiv = document.getElementById('pix');
+      pixDiv.style.display = 'block';
+      pixDiv.innerHTML = `
+        <h5 class="mb-3">Pedido Gerado</h5>
+        <p><strong>Pedido #${out.order_id}</strong></p>
+        <p>Status: <span class="badge bg-info">${out.status}</span></p>
+        <p>Subtotal: ${fmtBRL(out.subtotal_cents)}</p>
+        <p>Bônus: <span class="text-success">+${fmtBRL(out.bonus_cents)}</span></p>
+        <p class="fs-5"><strong>Total: ${fmtBRL(out.total_cents)}</strong></p>
+        <p class="mt-3 mb-2"><strong>QR Code:</strong></p>
+        <code class="d-block p-2 bg-white rounded">${out.qrCode}</code>
+        <p class="mt-3 text-muted">→ Redirecionando para página do Pedido...</p>
+      `;
+      setTimeout(() => location.href = 'order.html?id=' + out.order_id, 2000);
     });
 
     loadCart();

@@ -8,6 +8,8 @@
     "start": "node src/app.js",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:seed": "npx sequelize-cli db:seed:all",
+    "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
+    "db:seed:refresh": "npx sequelize-cli db:seed:undo:all && npx sequelize-cli db:seed:all",
     "test": "jest --runInBand",
     "seed:dev": "node scripts/seed-dev.js"
   },
