@@ -37,7 +37,7 @@ npm run db:migrate
 npm run dev
 ```
 
-### Rodar testes
+### Testes
 ```bash
 npm test
 ```
