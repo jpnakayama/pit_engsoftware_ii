@@ -52,4 +52,17 @@ async function login(req, res, next) {
   } catch (err) { return next(err); }
 }
 
-module.exports = { signup, login };
+async function me(req, res, next) {
+  try {
+    // req.user já está disponível pelo middleware auth
+    return res.json({
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email
+      }
+    });
+  } catch (err) { return next(err); }
+}
+
+module.exports = { signup, login, me };

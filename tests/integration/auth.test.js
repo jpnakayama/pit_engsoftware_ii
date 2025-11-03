@@ -1,4 +1,7 @@
 // tests/integration/auth.test.js
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'dev-secret'; // Garantir que o segredo seja consistente
+
 const request = require('supertest');
 const express = require('express');
 const routes = require('../../src/routes');
@@ -10,7 +13,7 @@ app.use('/', routes);
 
 describe('Auth flow', () => {
   beforeAll(async () => {
-    await sequelize.sync(); // para ambiente de teste sqlite in-memory
+    await sequelize.sync({ force: true }); // limpa e recria tabelas
   });
 
   afterAll(async () => {

@@ -1,0 +1,39 @@
+{
+    "info": { "name": "Cupcakes API (PIT II)", "_postman_id": "pit-cupcakes", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    "item": [
+      { "name": "Health", "request": { "method": "GET", "url": "{{base}}/health" } },
+      { "name": "Signup", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\"name\":\"Cliente\",\"email\":\"cliente@example.com\",\"password\":\"minhasenha123\"}" },
+        "url": "{{base}}/auth/signup" } },
+      { "name": "Login", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\"email\":\"cliente@example.com\",\"password\":\"minhasenha123\"}" },
+        "url": "{{base}}/auth/login" } },
+      { "name": "Me", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": "{{base}}/me" } },
+      { "name": "Products", "request": { "method": "GET", "url": "{{base}}/products" } },
+      { "name": "Cart - List", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": "{{base}}/cart" } },
+      { "name": "Cart - Add item", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\"product_id\":1,\"quantity\":2}" },
+        "url": "{{base}}/cart/items" } },
+      { "name": "Checkout Pix", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\"delivery_type\":\"retirada\"}" },
+        "url": "{{base}}/checkout/pix" } },
+      { "name": "Order - Status", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}],
+        "url": "{{base}}/orders/{{order_id}}/status" } },
+      { "name": "Order - Pay", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}],
+        "url": "{{base}}/orders/{{order_id}}/pay" } },
+      { "name": "Order - Advance", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\"next_status\":\"ready\"}" },
+        "url": "{{base}}/orders/{{order_id}}/advance" } },
+      { "name": "Order - Review", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\"rating\":5,\"comment\":\"Perfeito!\"}" },
+        "url": "{{base}}/orders/{{order_id}}/review" } },
+      { "name": "Loyalty - Summary", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}],
+        "url": "{{base}}/loyalty/summary" } }
+    ],
+    "variable": [
+      { "key": "base", "value": "http://localhost:3000" },
+      { "key": "token", "value": "" },
+      { "key": "order_id", "value": "1" }
+    ]
+  }
+  

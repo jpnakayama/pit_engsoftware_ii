@@ -1,0 +1,236 @@
+openapi: 3.1.0
+info:
+  title: Cupcakes API (PIT II)
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      responses:
+        "200": { description: OK }
+
+  /products:
+    get:
+      summary: Lista produtos
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, default: 10 }
+        - in: query
+          name: only_month
+          schema: { type: boolean, default: false }
+      responses:
+        "200": { description: OK }
+
+  /auth/signup:
+    post:
+      summary: Cadastro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        "201": { description: Created }
+        "409": { description: E-mail já cadastrado }
+
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        "200": { description: OK }
+        "401": { description: Credenciais inválidas }
+
+  /me:
+    get:
+      summary: Dados do usuário logado
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+
+  /cart:
+    get:
+      summary: Lista carrinho
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+
+  /cart/items:
+    post:
+      summary: Adiciona item ao carrinho
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, quantity]
+              properties:
+                product_id: { type: integer, minimum: 1 }
+                quantity: { type: integer, minimum: 1 }
+                note: { type: string }
+      responses:
+        "201": { description: Created }
+        "400": { description: Dados inválidos }
+        "401": { description: Unauthorized }
+  /cart/items/{id}:
+    delete:
+      summary: Remove item do carrinho
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200": { description: OK }
+        "404": { description: Não encontrado }
+        "401": { description: Unauthorized }
+
+  /checkout/pix:
+    post:
+      summary: Checkout Pix (simulado)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [delivery_type]
+              properties:
+                delivery_type:
+                  type: string
+                  enum: [retirada, delivery]
+      responses:
+        "201": { description: Created }
+        "400": { description: Carrinho vazio / delivery_type inválido }
+        "401": { description: Unauthorized }
+
+  /orders:
+    get:
+      summary: Histórico de pedidos do usuário
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+
+  /orders/{id}/status:
+    get:
+      summary: Status do pedido
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200": { description: OK }
+        "404": { description: Pedido não encontrado }
+        "401": { description: Unauthorized }
+
+  /orders/{id}/pay:
+    post:
+      summary: Confirmar pagamento (simulado)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200": { description: OK → status=preparing, pontos lançados }
+        "400": { description: Pedido não está aguardando pagamento }
+        "404": { description: Pedido não encontrado }
+        "401": { description: Unauthorized }
+
+  /orders/{id}/advance:
+    post:
+      summary: Avançar status do pedido (demo)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [next_status]
+              properties:
+                next_status:
+                  type: string
+                  enum: [ready, delivered, canceled]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200": { description: OK }
+        "400": { description: Transição inválida }
+        "404": { description: Pedido não encontrado }
+        "401": { description: Unauthorized }
+
+  /orders/{id}/review:
+    post:
+      summary: Avaliar pedido
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string }
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "201": { description: Created }
+        "400": { description: Pedido não pode ser avaliado / rating inválido }
+        "409": { description: Pedido já avaliado }
+        "404": { description: Pedido não encontrado }
+        "401": { description: Unauthorized }
+
+  /loyalty/summary:
+    get:
+      summary: Saldo e extrato de pontos
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

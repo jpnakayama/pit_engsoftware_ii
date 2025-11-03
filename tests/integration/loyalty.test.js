@@ -1,4 +1,7 @@
 // tests/integration/loyalty.test.js
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'dev-secret'; // Garantir que o segredo seja o mesmo
+
 const request = require('supertest');
 const express = require('express');
 const routes = require('../../src/routes');
@@ -13,9 +16,9 @@ describe('Loyalty summary', () => {
   let user, token;
 
   beforeAll(async () => {
-    await sequelize.sync(); // usa sqlite in-memory no ambiente de teste
+    await sequelize.sync({ force: true }); // limpa e recria tabelas
     user = await User.create({ name: 'Loy', email: 'loy@example.com', password_hash: 'hash' });
-    token = jwt.sign({ id: user.id, name: user.name, email: user.email }, 'dev-secret'); // no teste, segredo dev
+    token = jwt.sign({ id: user.id, name: user.name, email: user.email }, process.env.JWT_SECRET || 'dev-secret');
     await LoyaltyLedger.bulkCreate([
       { user_id: user.id, points_delta: 3, reason: 'Pedido #1' },
       { user_id: user.id, points_delta: 2, reason: 'Pedido #2' }
