@@ -2,7 +2,7 @@
 
 > **Imagem (export):** abaixo
 
-![diagrama-classes](./diagrama-classes.drawio.png)
+![diagrama-classes](./diagrama-classes.png)
 
 ---
 

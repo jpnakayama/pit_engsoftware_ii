@@ -1,58 +1,99 @@
-# DER — App Loja de Cupcakes
+# DER — Esquema Lógico (PIT II)
 
-> **Delta ES I → ES II (DER)**
-> **Resumo:** o esquema foi alinhado às FKs, PKs e integridades praticadas no banco (Sequelize).
+> **Imagem (export):** abaixo
+
+![der](./der.png)
+
+---
+
+## Delta ES I → ES II (o que mudou)
+**Resumo:** alinhamos o esquema às **migrations reais**, com PK/FK, integridade e unicidades.
 
 ### Adições
-- **Tabela `order_items`** com FKs: (`order_id` → `orders.id` CASCADE) e (`product_id` → `products.id` RESTRICT).
-- **Tabela `loyalty_ledger`** (`user_id` → `users.id` CASCADE).
-- **Tabela `reviews`** (`order_id` → `orders.id` CASCADE) com unicidade lógica “1 review por pedido”.
+- **`order_items`** com FKs: (`order_id` → `orders.id` CASCADE) e (`product_id` → `products.id` RESTRICT).
+- **`loyalty_ledger`** (`user_id` → `users.id` CASCADE) para histórico de pontos.
+- **`reviews`** (`order_id` → `orders.id` CASCADE) com unicidade **1 review por pedido**.
 
-### Alterações de Integridade
-- **orders.user_id**: `CASCADE` em delete/update.
-- **order_items.order_id**: `CASCADE`; **product_id**: `RESTRICT` (evita apagar produto referenciado).
-- **reviews.order_id**: `CASCADE`.
-- **ENUMs** materializados: `orders.status`, `orders.delivery_type`.
+### Alterações
+- **`orders`**
+  - `status` como ENUM: `awaiting_payment, preparing, ready, delivered, canceled`.
+  - `delivery_type` como ENUM: `retirada, delivery` (obrigatório).
+  - `bonus_cents` (default `0`), `total_cents` (pode ser nulo até checkout), `paid_at` (nulo até pagamento).
+- **`users`**
+  - `email` **UNIQUE**.
 
-### Campos/Restrições consolidadas
-- `orders.status` segue o fluxo definido (ver Classes).
-- `orders.bonus_cents` e `orders.total_cents` calculados no checkout.
-- `users.email` **único**.
-- Nulabilidades definidas conforme migrations (ex.: `comment` em `reviews` é opcional).
+### Integridade/Índices
+- `orders.user_id` → **ON DELETE CASCADE**  
+- `order_items.order_id` → **ON DELETE CASCADE**  
+- `order_items.product_id` → **ON DELETE RESTRICT**  
+- `users.email` → **UNIQUE**  
+- `reviews.order_id` → **UNIQUE** (garante 1 review por pedido)
 
-### Remoções / Fora do escopo (agora)
-- Tabelas para logística/entrega real, resgate de pontos, catálogo avançado.
+---
 
+## Tabelas (campos principais)
 
-> (Quando o PNG estiver pronto, insira aqui:)
-> **Figura 3 — Diagrama Entidade-Relacionamento**
-> ![der](./der.png)
+### `users`
+- `id (PK) : INTEGER`
+- `name : VARCHAR`
+- `email : VARCHAR (UNIQUE)`
+- `password_hash : VARCHAR`
+- `created_at : DATETIME`
+- `updated_at : DATETIME`
 
-## Tabelas, Chaves e Cardinalidades
+### `products`
+- `id (PK) : INTEGER`
+- `name : VARCHAR`
+- `description : TEXT NULL`
+- `price_cents : INTEGER`
+- `is_cupcake_of_month : BOOLEAN DEFAULT 0`
+- `month_discount_percent : INTEGER DEFAULT 0`
+- `image_url : VARCHAR NULL`
+- `created_at : DATETIME`
+- `updated_at : DATETIME`
 
-**users (PK: id)**  
-- 1 **—N** orders.user_id  
-- 1 **—N** loyalty_ledger.user_id
+### `orders`
+- `id (PK) : INTEGER`
+- `user_id (FK→users.id) : INTEGER`
+- `status : ENUM{awaiting_payment, preparing, ready, delivered, canceled}`
+- `delivery_type : ENUM{retirada, delivery}`
+- `bonus_cents : INTEGER DEFAULT 0`
+- `total_cents : INTEGER NULL`
+- `paid_at : DATETIME NULL`
+- `created_at : DATETIME`
+- `updated_at : DATETIME`
 
-**products (PK: id)**  
-- 1 **—N** order_items.product_id
+### `order_items`
+- `id (PK) : INTEGER`
+- `order_id (FK→orders.id) : INTEGER`
+- `product_id (FK→products.id) : INTEGER`
+- `quantity : INTEGER`
+- `unit_price_cents : INTEGER`
+- `note : TEXT NULL`
+- `created_at : DATETIME`
+- `updated_at : DATETIME`
 
-**orders (PK: id, FK: user_id→users.id)**
-- 1 **—N** order_items.order_id  
-- 1 **—0..1** reviews.order_id
+### `loyalty_ledger`
+- `id (PK) : INTEGER`
+- `user_id (FK→users.id) : INTEGER`
+- `points_delta : INTEGER` *(pode ser negativo para ajustes)*
+- `reason : VARCHAR NULL`
+- `created_at : DATETIME`
+- `updated_at : DATETIME`
 
-**order_items (PK: id, FK: order_id→orders.id, FK: product_id→products.id)**
+### `reviews`
+- `id (PK) : INTEGER`
+- `order_id (FK→orders.id, UNIQUE) : INTEGER`
+- `rating : INTEGER (1..5)`
+- `comment : TEXT NULL`
+- `created_at : DATETIME`
+- `updated_at : DATETIME`
 
-**loyalty_ledger (PK: id, FK: user_id→users.id)**
+---
 
-**reviews (PK: id, FK: order_id→orders.id)**
+## Como editar/exportar
+1. Abra `der.drawio` no diagrams.net.  
+2. Ajuste posição/marcadores se quiser (p. ex., usar crow’s foot).  
+3. **Export as → PNG** → salve como `docs/uml/der.png`.  
+4. Verifique aqui no GitHub se a imagem aparece corretamente.
 
-## Regras de Integridade
-- `orders.user_id` **CASCADE** em delete/update.  
-- `order_items.order_id` **CASCADE**; `product_id` **RESTRICT**.  
-- `reviews.order_id` **CASCADE**.  
-- `loyalty_ledger.user_id` **CASCADE**.
-
-## Observações
-- `orders.status` e `orders.delivery_type` são ENUMs.  
-- `orders.total_cents` e `orders.paid_at` definidos no checkout/pagamento.
