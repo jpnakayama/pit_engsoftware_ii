@@ -1,57 +1,100 @@
-# Casos de Uso — App Loja de Cupcakes
+# Diagrama de Casos de Uso — PIT II (MVP)
 
-> **Delta ES I → ES II (Casos de Uso)**
-> **Resumo:** focamos em 3 UCs nucleares do MVP; fluxos e regras batem 1:1 com a implementação.
+> **Imagem (export):** abaixo
 
-### Escopo consolidado (mantidos/ajustados)
-- **UC1 — Realizar Compra (Pix simulado):** vitrine → carrinho → checkout (`delivery_type`) → `Order(awaiting_payment)` → pagar (simulado) → avançar status.
-- **UC2 — Fidelidade (acumular pontos):** pontos lançados **no pagamento** do pedido: `floor(total_cents/1000)`.
-- **UC3 — Avaliação pós-compra:** 1 avaliação por pedido, permitida apenas em `ready` ou `delivered`.
+![casos-uso](./casos-uso.png)
 
-### Regras incorporadas no fluxo
-- **Bônus de retirada:** aplicado no checkout (`bonus_cents` = 200).
-- **Transições válidas:** `awaiting_payment → preparing → ready → delivered | canceled`.
-- **Bloqueios:** segunda avaliação do mesmo pedido retorna erro (409).
+---
 
-### Itens postergados / fora do MVP
-- Resgate/uso de pontos em compra futura.
-- Integração com gateway Pix real / logística real.
-- Telas/funcionalidades administrativas.
+## Delta ES I → ES II (o que mudou)
 
+**Resumo:** consolidamos os casos de uso para refletirem exatamente o MVP **implementado**. Foco nos três fluxos nucleares: compra, fidelidade e avaliação.
 
-> (Quando o PNG estiver pronto, insira aqui:)
-> **Figura 2 — Diagrama de Casos de Uso (UC1, UC2, UC3)**
-> ![casos-uso](./casos-uso.png)
+### Mantidos/Ajustados
+- **UC1 — Realizar Compra (Pix simulado):** vitrine → carrinho → checkout (`delivery_type` = retirada|delivery) → cria `Order` em `awaiting_payment`.  
+- **UC2 — Fidelidade (pontuar no pagamento):** pontos lançados **no pagamento** do pedido: `floor(total_cents / 1000)`.  
+- **UC3 — Avaliar Pedido:** permitido apenas com `status ∈ {ready, delivered}` e **1 review** por pedido.
 
-## UC1 — Realizar Compra
+### Fora do escopo agora (postergados)
+- Resgate/uso de pontos em compra futura (redeem).
+- Integração com gateway Pix/logística real.
+- Backoffice/admin.
+
+---
+
+## Descrição dos Casos de Uso
+
+### UC1 — Realizar Compra (Pix simulado)
 **Atores:** Cliente  
-**Pré-condições:** Usuário autenticado; catálogo disponível.  
+**Objetivo:** Finalizar uma compra, escolhendo retirada ou delivery, e gerar pedido para pagamento.
+
 **Fluxo Principal:**
-1. Cliente navega na vitrine e adiciona produtos ao carrinho.
-2. Cliente acessa o carrinho, escolhe `delivery_type` e prossegue ao checkout Pix (simulado).
-3. Sistema cria `Order(status='awaiting_payment')`, calcula `bonus_cents` (se retirada) e `total_cents`.
-4. Cliente confirma pagamento (simulado) → Sistema muda `status='preparing'` e registra `paid_at`.
-5. (Opcional) Sistema/Usuário avança status para `ready` e `delivered`.
+1. Cliente navega na **Vitrine** e adiciona itens ao **Carrinho**.
+2. Cliente acessa **Checkout** e seleciona `delivery_type`:
+   - `retirada` (aplica **bônus**: `bonus_cents = 200`);
+   - `delivery` (sem bônus).
+3. Sistema cria `Order` em `awaiting_payment` com `subtotal`, `bonus_cents` e `total_cents`.
+4. Sistema exibe dados de pagamento Pix **simulado** (QR/txid mock).
+5. Caso de uso termina com pedido aguardando pagamento.
 
-**Pós-condições:** Pedido criado, valores calculados, status atualizado.
+**Regras/Notas:**
+- Totais calculados no checkout.
+- `delivery_type` obrigatório.
+- Autenticação (login/signup) pode ser tratada como **«include»** deste UC.
 
-## UC2 — Acumular Pontos de Fidelidade
+---
+
+### UC2 — Fidelidade (pontuar no pagamento)
 **Atores:** Cliente  
-**Gatilho:** Confirmação de pagamento do pedido.  
-**Fluxo Principal:**
-1. Ao confirmar pagamento de um `Order`, sistema calcula pontos: `floor(total_cents/1000)`.
-2. Sistema lança em `LoyaltyLedger(user_id, points_delta>0, reason)`.
-3. Cliente consulta saldo e extrato em `/loyalty/summary`.
+**Objetivo:** Registrar pontos quando um pedido é pago.
 
-## UC3 — Avaliar Pedido
+**Fluxo Principal:**
+1. Cliente realiza o **pagamento** de um pedido `awaiting_payment`.
+2. Sistema muda status para `preparing`.
+3. Sistema lança pontos em `LoyaltyLedger`:
+   - `points_delta = floor(total_cents / 1000)`.
+
+**Regras/Notas:**
+- Pontos apenas **no pagamento**.
+- Extrato/saldo disponível em `/loyalty/summary`.
+
+---
+
+### UC3 — Avaliar Pedido
 **Atores:** Cliente  
-**Pré-condições:** `Order.status in ('ready','delivered')` e sem review prévia.  
-**Fluxo Principal:**
-1. Cliente informa `rating (1..5)` e `comment` (opcional).
-2. Sistema cria `Review(order_id, rating, comment)`.
-3. Sistema bloqueia novas avaliações do mesmo pedido.
+**Objetivo:** Registrar avaliação (1..5) e comentário opcional para um pedido concluído/preparado.
 
-**Fluxos Alternativos (gerais):**
-- UC1.FA1 — Carrinho vazio no checkout: sistema retorna erro 400.  
-- UC1.FA2 — Pedido não está aguardando pagamento: erro 400 na confirmação.  
-- UC3.FA1 — Pedido já avaliado: erro 409.
+**Fluxo Principal:**
+1. Cliente acessa o **Pedido** e opta por **Avaliar**.
+2. Sistema verifica elegibilidade:
+   - `status ∈ {ready, delivered}`.
+   - Não existe review anterior para o mesmo `order_id`.
+3. Cliente informa `rating (1..5)` e `comment` (opcional).
+4. Sistema salva a `Review` (uma por pedido).
+
+**Fluxos Alternativos/Erros:**
+- **Status inválido:** retorna erro (400).
+- **Review duplicada:** retorna erro (409).
+
+---
+
+## Anotações do Diagrama (para draw.io)
+- **Ator:** `Cliente`, à esquerda (fora da moldura “Cupcakes — MVP”).  
+- **Casos:** três elipses dentro da moldura:
+  - UC1 Realizar Compra (Pix simulado)
+  - UC2 Fidelidade (pontuar no pagamento)
+  - UC3 Avaliar Pedido
+- **Associações:** linhas do ator para cada UC.
+- **Notas (sugestão):**
+  - UC1: “Vitrine → Carrinho → Checkout; delivery_type: retirada|delivery; resultado: awaiting_payment”.
+  - UC2: “pontos = floor(total_cents/1000); evento: pagamento”.
+  - UC3: “status ∈ {ready, delivered}; 1 review/pedido”.
+- (Opcional) **«include» Autenticar (Login/Signup)** a partir do UC1.
+
+---
+
+## Como editar/exportar
+1. Abra `casos-uso.drawio` no diagrams.net.  
+2. Ajuste posicionamento/textos se necessário.  
+3. **File → Export as → PNG** → salve como `docs/uml/casos-uso.png`.  
+4. Verifique aqui no GitHub se a imagem aparece corretamente.
