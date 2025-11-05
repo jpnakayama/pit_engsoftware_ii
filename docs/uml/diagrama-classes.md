@@ -1,9 +1,8 @@
 # Diagrama de Classes — PIT II (MVP)
 
-> **Fonte editável:** [`diagrama-classes.drawio`](./diagrama-classes.drawio)  
 > **Imagem (export):** abaixo
 
-![diagrama-classes](./diagrama-classes.png)
+![diagrama-classes](./diagrama-classes.drawio.png)
 
 ---
 
