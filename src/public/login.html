@@ -61,20 +61,30 @@
 
     document.getElementById('fLogin').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
-      const body = { email: fd.get('email'), password: fd.get('password') };
-      const out = await api('/auth/login', { method: 'POST', body: JSON.stringify(body) });
-      setToken(out.token);
-      location.href = 'products.html';
+      try {
+        const fd = new FormData(e.target);
+        const body = { email: fd.get('email'), password: fd.get('password') };
+        const out = await api('/auth/login', { method: 'POST', body: JSON.stringify(body) });
+        setToken(out.token);
+        showModal('success', 'Login realizado!', 'Redirecionando para a página de produtos...', { showCancel: false });
+        setTimeout(() => location.href = 'products.html', 1000);
+      } catch (err) {
+        // Erro já é tratado pelo api() que mostra modal automaticamente
+      }
     });
 
     document.getElementById('fSignup').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
-      const body = { name: fd.get('name'), email: fd.get('email'), password: fd.get('password') };
-      const out = await api('/auth/signup', { method: 'POST', body: JSON.stringify(body) });
-      setToken(out.token);
-      location.href = 'products.html';
+      try {
+        const fd = new FormData(e.target);
+        const body = { name: fd.get('name'), email: fd.get('email'), password: fd.get('password') };
+        const out = await api('/auth/signup', { method: 'POST', body: JSON.stringify(body) });
+        setToken(out.token);
+        showModal('success', 'Conta criada!', 'Redirecionando para a página de produtos...', { showCancel: false });
+        setTimeout(() => location.href = 'products.html', 1000);
+      } catch (err) {
+        // Erro já é tratado pelo api() que mostra modal automaticamente
+      }
     });
   </script>
 </body>

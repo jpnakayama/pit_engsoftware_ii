@@ -78,23 +78,227 @@
     </div>
   </div>
 
+  <!-- Modal de Login -->
+  <div id="loginModal" class="login-modal-overlay" style="display: none;">
+    <div class="login-modal">
+      <div class="login-modal-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 class="login-modal-title">Acesso Necessário</h3>
+      <p class="login-modal-message">
+        Para adicionar produtos ao seu carrinho, você precisa estar logado em sua conta.
+      </p>
+      <p class="login-modal-submessage">
+        Faça login ou crie uma conta para continuar suas compras!
+      </p>
+      <div class="login-modal-buttons">
+        <button class="login-modal-btn-primary" onclick="redirectToLogin()">
+          Ir para Login
+        </button>
+        <button class="login-modal-btn-secondary" onclick="closeLoginModal()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let allProducts = [];
 
-    // Função para adicionar produto ao carrinho
-    function addToCart(id) {
-      if (!getToken()) { 
-        alert('Faça login para adicionar produtos ao carrinho.'); 
-        return location.href = 'login.html'; 
+    // Função para mostrar modal de login
+    function showLoginModal() {
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Previne scroll da página
       }
+    }
+
+    // Função para fechar modal de login
+    function closeLoginModal() {
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restaura scroll
+      }
+    }
+
+    // Função para redirecionar para login
+    function redirectToLogin() {
+      location.href = 'login.html';
+    }
+
+    // Fechar modal ao clicar fora dele
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) {
+            closeLoginModal();
+          }
+        });
+      }
+    });
+
+    // Variáveis para controle do modal de quantidade
+    let quantityModal = null;
+    let currentProductId = null;
+    let currentQuantity = 1;
+    let currentButtonElement = null;
+
+    // Função para mostrar modal de quantidade
+    function showQuantityModal(productId, buttonElement) {
+      if (!getToken()) { 
+        showLoginModal();
+        return;
+      }
+
+      currentProductId = productId;
+      currentQuantity = 1;
+      currentButtonElement = buttonElement;
+
+      // Remover modal existente se houver
+      if (quantityModal) {
+        quantityModal.remove();
+      }
+
+      // Obter posição do botão
+      const rect = buttonElement.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+      // Criar modal
+      quantityModal = document.createElement('div');
+      quantityModal.className = 'quantity-modal';
+      quantityModal.style.position = 'absolute';
       
-      api('/cart/items', { method: 'POST', body: JSON.stringify({ product_id: id, quantity: 1 }) })
+      // Calcular posição (aparecer abaixo do botão, centralizado)
+      const modalWidth = 200; // Largura aproximada do modal
+      const leftPos = rect.left + scrollLeft + (rect.width / 2) - (modalWidth / 2);
+      const topPos = rect.bottom + scrollTop + 10;
+      
+      // Ajustar se sair da tela à direita
+      const adjustedLeft = Math.max(10, Math.min(leftPos, window.innerWidth - modalWidth - 10));
+      
+      quantityModal.style.top = `${topPos}px`;
+      quantityModal.style.left = `${adjustedLeft}px`;
+      quantityModal.style.zIndex = '1000';
+
+      quantityModal.innerHTML = `
+        <div class="quantity-modal-content">
+          <div class="quantity-controls">
+            <button class="quantity-btn" onclick="decreaseQuantity()">−</button>
+            <input type="number" id="quantityInput" class="quantity-input" value="1" min="1" max="99">
+            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+          </div>
+          <div class="quantity-modal-buttons">
+            <button class="btn-quantity-confirm" onclick="confirmAddToCart()">Adicionar</button>
+            <button class="btn-quantity-cancel" onclick="closeQuantityModal()">Cancelar</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(quantityModal);
+
+      // Focar no input e adicionar listener
+      setTimeout(() => {
+        const input = quantityModal.querySelector('#quantityInput');
+        if (input) {
+          input.focus();
+          input.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value) || 1;
+            currentQuantity = Math.max(1, Math.min(99, value));
+            e.target.value = currentQuantity;
+          });
+          input.addEventListener('change', (e) => {
+            const value = parseInt(e.target.value) || 1;
+            currentQuantity = Math.max(1, Math.min(99, value));
+            e.target.value = currentQuantity;
+          });
+        }
+      }, 100);
+
+      // Fechar ao clicar fora
+      setTimeout(() => {
+        document.addEventListener('click', closeOnClickOutside);
+      }, 100);
+    }
+
+    function closeOnClickOutside(e) {
+      if (quantityModal && !quantityModal.contains(e.target) && !currentButtonElement.contains(e.target)) {
+        closeQuantityModal();
+      }
+    }
+
+    function increaseQuantity() {
+      if (currentQuantity < 99) {
+        currentQuantity++;
+        updateQuantityDisplay();
+      }
+    }
+
+    function decreaseQuantity() {
+      if (currentQuantity > 1) {
+        currentQuantity--;
+        updateQuantityDisplay();
+      }
+    }
+
+    function updateQuantityDisplay() {
+      const input = quantityModal?.querySelector('#quantityInput');
+      if (input) {
+        input.value = currentQuantity;
+      }
+    }
+
+    function confirmAddToCart() {
+      const input = quantityModal?.querySelector('#quantityInput');
+      const qty = input ? parseInt(input.value) || 1 : currentQuantity;
+      
+      if (qty < 1) {
+        currentQuantity = 1;
+        updateQuantityDisplay();
+        return;
+      }
+
+      currentQuantity = Math.min(qty, 99);
+      
+      api('/cart/items', { method: 'POST', body: JSON.stringify({ product_id: currentProductId, quantity: currentQuantity }) })
         .then(() => {
-          alert('Produto adicionado ao carrinho!');
+          closeQuantityModal();
+          showModal('success', 'Sucesso!', `${currentQuantity} item(ns) adicionado(s) ao carrinho!`, { showCancel: false });
         })
         .catch(err => {
-          alert('Erro ao adicionar produto: ' + err.message);
+          // Erro já é tratado pelo api() que mostra modal automaticamente
         });
+    }
+
+    function closeQuantityModal() {
+      if (quantityModal) {
+        quantityModal.remove();
+        quantityModal = null;
+        currentProductId = null;
+        currentButtonElement = null;
+        document.removeEventListener('click', closeOnClickOutside);
+      }
+    }
+
+    // Disponibilizar funções globalmente
+    window.showQuantityModal = showQuantityModal;
+    window.increaseQuantity = increaseQuantity;
+    window.decreaseQuantity = decreaseQuantity;
+    window.confirmAddToCart = confirmAddToCart;
+    window.closeQuantityModal = closeQuantityModal;
+
+    // Função para adicionar produto ao carrinho (agora mostra modal de quantidade)
+    function addToCart(id, event) {
+      const buttonElement = event?.currentTarget || event?.target?.closest('button');
+      if (buttonElement) {
+        showQuantityModal(id, buttonElement);
+      }
     }
 
     // Carregar cupcake do mês (apenas um)
@@ -128,7 +332,7 @@
             <p class="featured-card-details">${detailsText}</p>
             <div class="featured-card-footer">
               <div class="featured-price">${fmtBRL(product.price_cents)}</div>
-              <button class="btn-featured-add" onclick="addToCart(${product.id})">
+              <button class="btn-featured-add" onclick="addToCart(${product.id}, event)">
                 <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>
@@ -239,7 +443,7 @@
             <p class="product-description-modern">${p.description || ''}</p>
             <div class="product-footer-modern">
               <span class="price-modern">${fmtBRL(p.price_cents)}</span>
-              <button class="btn-add-modern" onclick="addToCart(${p.id})">
+              <button class="btn-add-modern" onclick="addToCart(${p.id}, event)">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>
@@ -287,7 +491,7 @@
             </div>
             <div class="product-detail-actions">
               <div class="product-detail-price">${fmtBRL(p.price_cents)}</div>
-              <button class="btn btn-primary" onclick="addToCart(${p.id})">
+              <button class="btn btn-primary" onclick="addToCart(${p.id}, event)">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
                   <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>

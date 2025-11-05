@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Pedidos — Cupcakes do JP</title>
+  <title>Acompanhar Pedido — Cupcakes do JP</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='12' y='25' width='16' height='8' fill='%239d4edd'/%3E%3Crect x='8' y='20' width='24' height='8' fill='%234361ee'/%3E%3Crect x='6' y='16' width='28' height='6' fill='%2348cae4'/%3E%3Crect x='4' y='12' width='32' height='6' fill='%2352b788'/%3E%3Crect x='2' y='8' width='36' height='6' fill='%23ffd60a'/%3E%3Crect x='18' y='4' width='4' height='6' fill='%23e63946'/%3E%3C/svg%3E">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,36 +14,69 @@
     document.write(getMenuHTML('order'));
   </script>
 
+  <!-- Área de notificações no topo -->
+  <div id="notification-area" class="notification-area"></div>
+
   <div class="page-container">
     <div class="page-section">
-      <h2 class="page-title">Gerenciar Pedido</h2>
+      <h2 class="page-title">Acompanhar Pedido</h2>
 
       <div class="mb-4">
-        <label class="form-label fw-bold">ID do Pedido:</label>
-        <div class="d-flex gap-2 flex-wrap">
-          <input class="form-control" style="max-width: 200px;" id="orderId" placeholder="Ex: 1">
-          <button class="btn btn-primary" id="btnStatus">Ver Status</button>
-        </div>
+        <label class="form-label fw-bold">Selecione um pedido:</label>
+        <select class="form-select" id="orderSelect" style="max-width: 400px;">
+          <option value="">Carregando pedidos...</option>
+        </select>
       </div>
 
-      <div id="status" class="alert alert-info" style="display: none;"></div>
-
-      <div class="mb-4 pt-3 border-top">
-        <h3 class="page-subtitle" style="margin-top: 0;">Ações</h3>
-        <div class="d-flex gap-2 flex-wrap">
-          <button class="btn btn-success" id="btnPay">Confirmar Pagamento</button>
-          <button class="btn btn-outline-warning" data-next="ready">Marcar como Pronto</button>
-          <button class="btn btn-outline-primary" data-next="delivered">Marcar como Entregue</button>
+      <!-- Informações do pedido -->
+      <div id="orderInfo" style="display: none;">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h5 class="card-title">Informações do Pedido</h5>
+                <p class="mb-2"><strong>Status:</strong> <span id="orderStatus" class="badge bg-primary"></span></p>
+                <p class="mb-3"><strong>Total:</strong> <span id="orderTotal" class="fw-bold"></span></p>
+                <div id="payButtonContainer">
+                  <button class="btn btn-success" id="btnPay">Confirmar Pagamento</button>
+                </div>
+              </div>
+            </div>
+            <hr>
+            <h6 class="mb-3">Itens do Pedido</h6>
+            <div id="orderItems" class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unit.</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="orderItemsBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
       <hr class="my-4">
 
-      <div class="review-section">
+      <!-- Avaliar Pedido -->
+      <div class="review-section" id="reviewSection" style="display: none;">
         <h3 class="page-subtitle" style="margin-top: 0;">Avaliar Pedido</h3>
         <div class="mb-3">
-          <label class="form-label">Nota (1-5)</label>
-          <input id="rating" type="number" class="form-control" style="max-width: 100px;" min="1" max="5" value="5">
+          <label class="form-label">Nota</label>
+          <div class="star-rating" id="starRating">
+            <span class="star" data-rating="1">☆</span>
+            <span class="star" data-rating="2">☆</span>
+            <span class="star" data-rating="3">☆</span>
+            <span class="star" data-rating="4">☆</span>
+            <span class="star" data-rating="5">☆</span>
+          </div>
+          <input type="hidden" id="rating" value="5">
         </div>
         <div class="mb-3">
           <label class="form-label">Comentário (opcional)</label>
@@ -51,63 +84,343 @@
         </div>
         <button class="btn btn-primary" id="btnReview">Enviar Avaliação</button>
       </div>
-
-      <div id="out" class="mt-4 p-3 bg-light rounded border" style="display: none; font-family: monospace; white-space: pre-wrap;"></div>
     </div>
   </div>
 
   <script>
     if (!getToken()) location.href = 'login.html';
 
-    const params = new URLSearchParams(location.search);
-    const initialId = params.get('id');
-    const orderInput = document.getElementById('orderId');
-    if (initialId) orderInput.value = initialId;
+    let currentOrderId = null;
+    let pollingInterval = null;
+    let autoAdvanceInterval = null;
+    let lastStatus = null;
 
-    async function loadStatus() {
-      const id = orderInput.value.trim();
-      if (!id) return alert('Informe o ID do pedido');
-      const s = await api('/orders/' + id + '/status');
-      const statusDiv = document.getElementById('status');
-      statusDiv.style.display = 'block';
-      statusDiv.innerHTML = `<strong>Status:</strong> <span class="badge bg-primary">${s.status}</span>`;
+    // Sistema de notificações
+    function showNotification(message, type = 'info') {
+      const notificationArea = document.getElementById('notification-area');
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.textContent = message;
+      notificationArea.appendChild(notification);
+
+      // Animar entrada
+      setTimeout(() => notification.classList.add('show'), 10);
+
+      // Remover após 5 segundos
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 5000);
     }
 
-    async function pay() {
-      const id = orderInput.value.trim();
-      if (!id) return alert('Informe o ID do pedido');
-      const out = await api('/orders/' + id + '/pay', { method: 'POST' });
-      const outDiv = document.getElementById('out');
-      outDiv.style.display = 'block';
-      outDiv.innerText = JSON.stringify(out, null, 2);
-      loadStatus();
+    // Carregar lista de pedidos
+    async function loadOrders() {
+      try {
+        const orders = await api('/orders');
+        const select = document.getElementById('orderSelect');
+        
+        if (orders.length === 0) {
+          select.innerHTML = '<option value="">Nenhum pedido encontrado</option>';
+          return;
+        }
+
+        select.innerHTML = '<option value="">Selecione um pedido...</option>';
+        orders.forEach(order => {
+          const statusText = getStatusText(order.status);
+          const option = document.createElement('option');
+          option.value = order.id;
+          option.textContent = `Pedido #${order.id} - ${statusText}`;
+          select.appendChild(option);
+        });
+
+        // Se houver ID na URL, selecionar automaticamente
+        const params = new URLSearchParams(location.search);
+        const initialId = params.get('id');
+        if (initialId) {
+          select.value = initialId;
+          loadOrderDetails(initialId);
+        }
+      } catch (err) {
+        // Erro já é tratado pelo api()
+      }
     }
 
-    async function advance(next) {
-      const id = orderInput.value.trim();
-      if (!id) return alert('Informe o ID do pedido');
-      const out = await api('/orders/' + id + '/advance', { method: 'POST', body: JSON.stringify({ next_status: next }) });
-      const outDiv = document.getElementById('out');
-      outDiv.style.display = 'block';
-      outDiv.innerText = JSON.stringify(out, null, 2);
-      loadStatus();
+    // Função para obter texto do status
+    function getStatusText(status) {
+      const statusMap = {
+        'created': 'Criado',
+        'awaiting_payment': 'Aguardando Pagamento',
+        'preparing': 'Preparando',
+        'ready': 'Pronto',
+        'delivered': 'Entregue',
+        'canceled': 'Cancelado'
+      };
+      return statusMap[status] || status;
     }
 
+    // Função para obter classe do badge do status
+    function getStatusBadgeClass(status) {
+      const badgeMap = {
+        'created': 'bg-secondary',
+        'awaiting_payment': 'bg-warning',
+        'preparing': 'bg-warning',
+        'ready': 'bg-info',
+        'delivered': 'bg-success',
+        'canceled': 'bg-danger'
+      };
+      return badgeMap[status] || 'bg-secondary';
+    }
+
+    // Carregar detalhes do pedido
+    async function loadOrderDetails(orderId) {
+      if (!orderId) {
+        document.getElementById('orderInfo').style.display = 'none';
+        document.getElementById('reviewSection').style.display = 'none';
+        stopPolling();
+        return;
+      }
+
+      try {
+        const status = await api('/orders/' + orderId + '/status');
+        const orders = await api('/orders');
+        const order = orders.find(o => o.id === Number(orderId));
+
+        if (!order) {
+          showModal('error', 'Erro', 'Pedido não encontrado', { showCancel: false });
+          return;
+        }
+
+        currentOrderId = orderId;
+        lastStatus = status.status;
+
+        // Mostrar informações do pedido
+        document.getElementById('orderStatus').textContent = getStatusText(status.status);
+        document.getElementById('orderStatus').className = `badge ${getStatusBadgeClass(status.status)}`;
+        
+        const total = order.total_cents ? fmtBRL(order.total_cents) : 'R$ 0,00';
+        document.getElementById('orderTotal').textContent = total;
+
+        // Mostrar/esconder botão de pagamento
+        const payButtonContainer = document.getElementById('payButtonContainer');
+        if (status.status === 'awaiting_payment' || status.status === 'created') {
+          payButtonContainer.style.display = 'block';
+        } else {
+          payButtonContainer.style.display = 'none';
+        }
+
+        // Mostrar itens
+        const itemsBody = document.getElementById('orderItemsBody');
+        itemsBody.innerHTML = '';
+        if (order.items && order.items.length > 0) {
+          order.items.forEach(item => {
+            const tr = document.createElement('tr');
+            const productName = item.Product ? item.Product.name : `Produto #${item.product_id}`;
+            const unitPrice = fmtBRL(item.unit_price_cents);
+            const subtotal = fmtBRL(item.unit_price_cents * item.quantity);
+            tr.innerHTML = `
+              <td>${productName}</td>
+              <td>${item.quantity}</td>
+              <td>${unitPrice}</td>
+              <td>${subtotal}</td>
+            `;
+            itemsBody.appendChild(tr);
+          });
+        } else {
+          itemsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum item encontrado</td></tr>';
+        }
+
+        document.getElementById('orderInfo').style.display = 'block';
+
+        // Mostrar seção de avaliação apenas para pedidos entregues
+        const canReview = status.status === 'delivered';
+        document.getElementById('reviewSection').style.display = canReview ? 'block' : 'none';
+
+        // Iniciar polling se o pedido estiver em andamento
+        const inProgressStatuses = ['preparing', 'ready'];
+        if (inProgressStatuses.includes(status.status)) {
+          startPolling();
+          startAutoAdvance(status.status);
+        } else {
+          stopPolling();
+          stopAutoAdvance();
+        }
+      } catch (err) {
+        // Erro já é tratado pelo api()
+      }
+    }
+
+    // Polling automático a cada 10 segundos
+    function startPolling() {
+      stopPolling(); // Garantir que não há múltiplos intervalos
+      pollingInterval = setInterval(async () => {
+        if (!currentOrderId) return;
+        
+        try {
+          const status = await api('/orders/' + currentOrderId + '/status');
+          
+          // Se o status mudou, mostrar notificação
+          if (status.status !== lastStatus) {
+            const oldStatusText = getStatusText(lastStatus);
+            const newStatusText = getStatusText(status.status);
+            showNotification(`Status do pedido alterado: ${oldStatusText} → ${newStatusText}`, 'info');
+            lastStatus = status.status;
+            
+            // Recarregar detalhes do pedido
+            loadOrderDetails(currentOrderId);
+          }
+        } catch (err) {
+          // Erro silencioso no polling
+        }
+      }, 10000); // 10 segundos
+    }
+
+    function stopPolling() {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+      }
+    }
+
+    // Sistema de estrelas para avaliação
+    function initStarRating() {
+      const stars = document.querySelectorAll('.star');
+      const ratingInput = document.getElementById('rating');
+
+      stars.forEach((star, index) => {
+        star.addEventListener('mouseenter', () => {
+          highlightStars(index + 1);
+        });
+
+        star.addEventListener('click', () => {
+          ratingInput.value = index + 1;
+          highlightStars(index + 1, true);
+        });
+      });
+
+      document.getElementById('starRating').addEventListener('mouseleave', () => {
+        const currentRating = parseInt(ratingInput.value);
+        highlightStars(currentRating, true);
+      });
+
+      // Inicializar com 5 estrelas
+      highlightStars(5, true);
+    }
+
+    function highlightStars(count, permanent = false) {
+      const stars = document.querySelectorAll('.star');
+      stars.forEach((star, index) => {
+        if (index < count) {
+          star.textContent = '★';
+          star.classList.add('active');
+        } else {
+          star.textContent = '☆';
+          star.classList.remove('active');
+        }
+      });
+    }
+
+    // Confirmar pagamento e iniciar processo automático
+    async function confirmPayment() {
+      if (!currentOrderId) {
+        showModal('warning', 'Atenção', 'Selecione um pedido primeiro', { showCancel: false });
+        return;
+      }
+
+      try {
+        await api('/orders/' + currentOrderId + '/pay', { method: 'POST' });
+        showModal('success', 'Pagamento confirmado!', 'O processo automático será iniciado agora.', { showCancel: false });
+        
+        // Aguardar um pouco e recarregar status
+        setTimeout(() => {
+          loadOrderDetails(currentOrderId);
+        }, 1000);
+      } catch (err) {
+        // Erro já é tratado pelo api()
+      }
+    }
+
+    // Processo automático de avanço de status
+    async function startAutoAdvance(currentStatus) {
+      stopAutoAdvance(); // Garantir que não há múltiplos intervalos
+      
+      if (currentStatus === 'preparing') {
+        // Avançar para 'ready' após 10 segundos
+        autoAdvanceInterval = setTimeout(async () => {
+          try {
+            await api('/orders/' + currentOrderId + '/advance', { 
+              method: 'POST', 
+              body: JSON.stringify({ next_status: 'ready' }) 
+            });
+            showNotification('Status do pedido alterado: Preparando → Pronto', 'info');
+            loadOrderDetails(currentOrderId);
+          } catch (err) {
+            // Erro silencioso
+          }
+        }, 10000);
+      } else if (currentStatus === 'ready') {
+        // Avançar para 'delivered' após 10 segundos
+        autoAdvanceInterval = setTimeout(async () => {
+          try {
+            await api('/orders/' + currentOrderId + '/advance', { 
+              method: 'POST', 
+              body: JSON.stringify({ next_status: 'delivered' }) 
+            });
+            showNotification('Status do pedido alterado: Pronto → Entregue', 'success');
+            loadOrderDetails(currentOrderId);
+          } catch (err) {
+            // Erro silencioso
+          }
+        }, 10000);
+      }
+    }
+
+    function stopAutoAdvance() {
+      if (autoAdvanceInterval) {
+        clearTimeout(autoAdvanceInterval);
+        autoAdvanceInterval = null;
+      }
+    }
+
+    // Enviar avaliação
     async function review() {
-      const id = orderInput.value.trim();
-      if (!id) return alert('Informe o ID do pedido');
-      const rating = Number(document.getElementById('rating').value);
-      const comment = document.getElementById('comment').value;
-      const out = await api('/orders/' + id + '/review', { method: 'POST', body: JSON.stringify({ rating, comment }) });
-      const outDiv = document.getElementById('out');
-      outDiv.style.display = 'block';
-      outDiv.innerHTML = `<p class="text-success"><strong>Avaliação enviada com sucesso!</strong></p><pre>${JSON.stringify(out, null, 2)}</pre>`;
+      const orderId = document.getElementById('orderSelect').value;
+      if (!orderId) {
+        showModal('warning', 'Atenção', 'Selecione um pedido primeiro', { showCancel: false });
+        return;
+      }
+
+      try {
+        const rating = parseInt(document.getElementById('rating').value);
+        const comment = document.getElementById('comment').value;
+        await api('/orders/' + orderId + '/review', { method: 'POST', body: JSON.stringify({ rating, comment }) });
+        showModal('success', 'Avaliação enviada!', 'Sua avaliação foi registrada com sucesso. Obrigado!', { showCancel: false });
+        // Limpar campos
+        document.getElementById('rating').value = 5;
+        document.getElementById('comment').value = '';
+        highlightStars(5, true);
+      } catch (err) {
+        // Erro já é tratado pelo api()
+      }
     }
 
-    document.getElementById('btnStatus').addEventListener('click', loadStatus);
-    document.getElementById('btnPay').addEventListener('click', pay);
-    document.querySelectorAll('button[data-next]').forEach(b => b.addEventListener('click', () => advance(b.getAttribute('data-next'))));
+    // Event listeners
+    document.getElementById('orderSelect').addEventListener('change', (e) => {
+      stopAutoAdvance();
+      loadOrderDetails(e.target.value);
+    });
+
+    document.getElementById('btnPay').addEventListener('click', confirmPayment);
     document.getElementById('btnReview').addEventListener('click', review);
+
+    // Inicializar
+    loadOrders();
+    initStarRating();
+
+    // Limpar polling e auto-advance ao sair da página
+    window.addEventListener('beforeunload', () => {
+      stopPolling();
+      stopAutoAdvance();
+    });
   </script>
 </body>
 </html>

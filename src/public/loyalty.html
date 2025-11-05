@@ -18,34 +18,161 @@
     <div class="page-section">
       <h2 class="page-title">Programa de Fidelidade</h2>
       
-      <div class="loyalty-balance-card bg-gradient p-4 rounded mb-4" style="background: linear-gradient(135deg, var(--pink-logo) 0%, #ff4d9e 100%); color: white;">
-        <h3 class="mb-2" style="font-size: 16px; opacity: 0.9;">Meu Saldo</h3>
-        <div id="saldo" class="fs-1 fw-bold">0 pontos</div>
+      <div class="loyalty-balance-card bg-gradient p-4 rounded mb-4" style="background: linear-gradient(135deg, #ff69b4 0%, #ff4d9e 100%) !important; background-color: #ff69b4 !important; position: relative; z-index: 1; min-height: 120px;">
+        <h3 class="mb-2" style="font-size: 16px; color: #ffffff !important; font-weight: 400; opacity: 1 !important; margin-bottom: 8px !important; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">Meu Saldo</h3>
+        <div id="saldo" class="fs-1 fw-bold" style="min-height: 48px; color: #ffffff !important; font-size: 2.5rem !important; font-weight: 700 !important; line-height: 1.2 !important; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Carregando...</div>
       </div>
 
       <h3 class="page-subtitle">Extrato</h3>
-      <div id="ul" class="list-group"></div>
+      <div id="ul" class="list-group mb-5"></div>
+
+      <hr class="my-4">
+
+      <h3 class="page-subtitle">Resgatar Pontos</h3>
+      <p class="text-muted mb-4">Escolha um benefício e resgate usando seus pontos de fidelidade:</p>
+      
+      <div id="rewards" class="row g-3">
+        <!-- Os resgates serão carregados aqui -->
+      </div>
     </div>
   </div>
 
   <script>
     if (!getToken()) location.href = 'login.html';
 
+    // Lista de resgates disponíveis
+    const rewards = [
+      { id: 1, name: 'Desconto de R$ 5,00', points: 5, description: 'Desconto de R$ 5,00 na sua próxima compra' },
+      { id: 2, name: 'Desconto de R$ 10,00', points: 10, description: 'Desconto de R$ 10,00 na sua próxima compra' },
+      { id: 3, name: 'Desconto de R$ 20,00', points: 20, description: 'Desconto de R$ 20,00 na sua próxima compra' },
+      { id: 4, name: 'Cupcake Grátis', points: 15, description: 'Ganhe um cupcake grátis na sua próxima compra' },
+      { id: 5, name: 'Desconto de 10%', points: 25, description: 'Desconto de 10% em toda a compra' },
+      { id: 6, name: 'Box de Cupcakes', points: 50, description: 'Box especial com 6 cupcakes diversos' }
+    ];
+
+    let currentPoints = 0;
+
     async function load() {
-      const { total_points, entries } = await api('/loyalty/summary');
-      document.getElementById('saldo').innerText = `${total_points} pontos`;
-      const ul = document.getElementById('ul'); ul.innerHTML = '';
-      entries.forEach(e => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        const pointsClass = e.points_delta > 0 ? 'text-success' : 'text-danger';
-        li.innerHTML = `
-          <span>${e.reason || 'Lançamento'}</span>
-          <span class="badge ${pointsClass} bg-light fs-6">${e.points_delta > 0 ? '+' : ''}${e.points_delta} pontos</span>
+      try {
+        const { total_points, entries } = await api('/loyalty/summary');
+        currentPoints = total_points;
+        
+        // Atualizar saldo
+        const saldoEl = document.getElementById('saldo');
+        if (saldoEl) {
+          saldoEl.innerText = `${total_points} pontos`;
+          saldoEl.style.color = '#ffffff';
+          saldoEl.style.fontSize = '2.5rem';
+          saldoEl.style.fontWeight = '700';
+          saldoEl.style.lineHeight = '1.2';
+        }
+        
+        // Atualizar extrato
+        const ul = document.getElementById('ul');
+        if (ul) {
+          ul.innerHTML = '';
+          if (entries.length === 0) {
+            ul.innerHTML = '<li class="list-group-item text-center text-muted">Nenhuma transação encontrada</li>';
+          } else {
+            entries.forEach(e => {
+              const li = document.createElement('li');
+              li.className = 'list-group-item d-flex justify-content-between align-items-center';
+              const pointsClass = e.points_delta > 0 ? 'text-success' : 'text-danger';
+              li.innerHTML = `
+                <span>${e.reason || 'Lançamento'}</span>
+                <span class="badge ${pointsClass} bg-light fs-6">${e.points_delta > 0 ? '+' : ''}${e.points_delta} pontos</span>
+              `;
+              ul.appendChild(li);
+            });
+          }
+        }
+        
+        // Atualizar seção de resgates
+        loadRewards();
+      } catch (err) {
+        // Erro já é tratado pelo api()
+        const saldoEl = document.getElementById('saldo');
+        if (saldoEl) {
+          saldoEl.innerText = '0 pontos';
+        }
+      }
+    }
+
+    function loadRewards() {
+      const rewardsContainer = document.getElementById('rewards');
+      if (!rewardsContainer) return;
+
+      rewardsContainer.innerHTML = '';
+      
+      rewards.forEach(reward => {
+        const canRedeem = currentPoints >= reward.points;
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+        
+        col.innerHTML = `
+          <div class="card h-100 ${canRedeem ? '' : 'opacity-75'}" style="border: 2px solid ${canRedeem ? '#52b788' : '#e0e0e0'};">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${reward.name}</h5>
+              <p class="card-text text-muted small">${reward.description}</p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <span class="badge bg-primary fs-6">${reward.points} pontos</span>
+                  ${canRedeem 
+                    ? '<span class="badge bg-success">Disponível</span>' 
+                    : '<span class="badge bg-secondary">Insuficiente</span>'}
+                </div>
+                <button class="btn btn-primary w-100 disabled" 
+                        disabled
+                        style="cursor: not-allowed; opacity: 0.6;">
+                  ${canRedeem ? 'Resgatar' : 'Pontos Insuficientes'}
+                </button>
+              </div>
+            </div>
+          </div>
         `;
-        ul.appendChild(li);
+        
+        rewardsContainer.appendChild(col);
       });
     }
+
+    async function redeemReward(rewardId) {
+      const reward = rewards.find(r => r.id === rewardId);
+      if (!reward) return;
+
+      if (currentPoints < reward.points) {
+        showModal('warning', 'Pontos Insuficientes', `Você precisa de ${reward.points} pontos para resgatar este benefício.`, { showCancel: false });
+        return;
+      }
+
+      showModal('info', 'Confirmar Resgate', 
+        `Deseja resgatar "${reward.name}" por ${reward.points} pontos?`, 
+        {
+          showCancel: true,
+          confirmText: 'Confirmar',
+          cancelText: 'Cancelar',
+          onConfirm: async () => {
+            try {
+              // Nota: A API de resgate ainda não existe, então vamos simular
+              // Em produção, você criaria uma rota POST /loyalty/redeem
+              showModal('success', 'Resgate realizado!', 
+                `Você resgatou "${reward.name}" com sucesso! ${reward.description}`, 
+                { showCancel: false });
+              
+              // Recarregar para atualizar saldo
+              setTimeout(() => {
+                load();
+              }, 1000);
+            } catch (err) {
+              // Erro já é tratado pelo api()
+            }
+          }
+        }
+      );
+    }
+
+    // Disponibilizar função globalmente
+    window.redeemReward = redeemReward;
+
     load();
   </script>
 </body>

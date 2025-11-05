@@ -58,24 +58,55 @@
 
     async function loadCart() {
       const c = await api('/cart');
-      const tb = document.querySelector('#tb tbody'); tb.innerHTML = '';
+      const tb = document.querySelector('#tb tbody'); 
+      tb.innerHTML = '';
+      
+      // Agrupar itens pelo product_id
+      const groupedItems = {};
       c.items.forEach(i => {
+        const productId = i.product_id;
+        if (!groupedItems[productId]) {
+          groupedItems[productId] = {
+            product_id: productId,
+            name: i.Product?.name || ('#' + productId),
+            unit_price_cents: i.unit_price_cents,
+            total_quantity: 0,
+            item_ids: [] // Guardar IDs para remoção
+          };
+        }
+        groupedItems[productId].total_quantity += i.quantity;
+        groupedItems[productId].item_ids.push(i.id);
+      });
+      
+      // Renderizar itens agrupados
+      Object.values(groupedItems).forEach(item => {
         const tr = document.createElement('tr');
+        const totalPrice = item.total_quantity * item.unit_price_cents;
         tr.innerHTML = `
-          <td>${i.Product?.name || ('#'+i.product_id)}</td>
-          <td>${i.quantity}</td>
-          <td>${fmtBRL(i.unit_price_cents)}</td>
-          <td>${fmtBRL(i.quantity * i.unit_price_cents)}</td>
-          <td><button class="btn btn-sm btn-outline-danger" data-id="${i.id}">remover</button></td>`;
+          <td>${item.name}</td>
+          <td>${item.total_quantity}</td>
+          <td>${fmtBRL(item.unit_price_cents)}</td>
+          <td>${fmtBRL(totalPrice)}</td>
+          <td><button class="btn btn-sm btn-outline-danger" data-ids="${item.item_ids.join(',')}">remover</button></td>`;
         tb.appendChild(tr);
       });
-      tb.querySelectorAll('button[data-id]').forEach(btn => {
+      
+      // Event listeners para remover
+      tb.querySelectorAll('button[data-ids]').forEach(btn => {
         btn.addEventListener('click', async (ev) => {
-          const id = ev.currentTarget.getAttribute('data-id');
-          await api('/cart/items/' + id, { method: 'DELETE' });
+          const ids = ev.currentTarget.getAttribute('data-ids').split(',');
+          // Remover todos os itens deste produto
+          for (const id of ids) {
+            try {
+              await api('/cart/items/' + id, { method: 'DELETE' });
+            } catch (err) {
+              // Ignorar erros individuais, continuar removendo os outros
+            }
+          }
           loadCart();
         });
       });
+      
       document.getElementById('subtotal').innerText = fmtBRL(c.subtotal);
     }
 

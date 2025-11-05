@@ -9,7 +9,8 @@ paths:
     get:
       summary: Healthcheck
       responses:
-        "200": { description: OK }
+        "200":
+          description: OK
 
   /products:
     get:
@@ -25,7 +26,8 @@ paths:
           name: only_month
           schema: { type: boolean, default: false }
       responses:
-        "200": { description: OK }
+        "200":
+          description: OK
 
   /auth/signup:
     post:
@@ -42,8 +44,10 @@ paths:
                 email: { type: string, format: email }
                 password: { type: string, minLength: 8 }
       responses:
-        "201": { description: Created }
-        "409": { description: E-mail já cadastrado }
+        "201":
+          description: Created
+        "409":
+          description: "E-mail já cadastrado"
 
   /auth/login:
     post:
@@ -59,24 +63,30 @@ paths:
                 email: { type: string, format: email }
                 password: { type: string, minLength: 8 }
       responses:
-        "200": { description: OK }
-        "401": { description: Credenciais inválidas }
+        "200":
+          description: OK
+        "401":
+          description: "Credenciais inválidas"
 
   /me:
     get:
       summary: Dados do usuário logado
       security: [{ bearerAuth: [] }]
       responses:
-        "200": { description: OK }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
 
   /cart:
     get:
       summary: Lista carrinho
       security: [{ bearerAuth: [] }]
       responses:
-        "200": { description: OK }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
 
   /cart/items:
     post:
@@ -94,9 +104,13 @@ paths:
                 quantity: { type: integer, minimum: 1 }
                 note: { type: string }
       responses:
-        "201": { description: Created }
-        "400": { description: Dados inválidos }
-        "401": { description: Unauthorized }
+        "201":
+          description: Created
+        "400":
+          description: "Dados inválidos"
+        "401":
+          description: Unauthorized
+
   /cart/items/{id}:
     delete:
       summary: Remove item do carrinho
@@ -107,9 +121,12 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "200": { description: OK }
-        "404": { description: Não encontrado }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "404":
+          description: "Não encontrado"
+        "401":
+          description: Unauthorized
 
   /checkout/pix:
     post:
@@ -127,17 +144,22 @@ paths:
                   type: string
                   enum: [retirada, delivery]
       responses:
-        "201": { description: Created }
-        "400": { description: Carrinho vazio / delivery_type inválido }
-        "401": { description: Unauthorized }
+        "201":
+          description: Created
+        "400":
+          description: "Carrinho vazio / delivery_type inválido"
+        "401":
+          description: Unauthorized
 
   /orders:
     get:
       summary: Histórico de pedidos do usuário
       security: [{ bearerAuth: [] }]
       responses:
-        "200": { description: OK }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
 
   /orders/{id}/status:
     get:
@@ -149,9 +171,12 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "200": { description: OK }
-        "404": { description: Pedido não encontrado }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "404":
+          description: "Pedido não encontrado"
+        "401":
+          description: Unauthorized
 
   /orders/{id}/pay:
     post:
@@ -163,10 +188,14 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "200": { description: OK → status=preparing, pontos lançados }
-        "400": { description: Pedido não está aguardando pagamento }
-        "404": { description: Pedido não encontrado }
-        "401": { description: Unauthorized }
+        "200":
+          description: "OK — status=preparing; pontos lançados"
+        "400":
+          description: "Pedido não está aguardando pagamento"
+        "404":
+          description: "Pedido não encontrado"
+        "401":
+          description: Unauthorized
 
   /orders/{id}/advance:
     post:
@@ -189,10 +218,14 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "200": { description: OK }
-        "400": { description: Transição inválida }
-        "404": { description: Pedido não encontrado }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "400":
+          description: "Transição inválida"
+        "404":
+          description: "Pedido não encontrado"
+        "401":
+          description: Unauthorized
 
   /orders/{id}/review:
     post:
@@ -214,19 +247,26 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "201": { description: Created }
-        "400": { description: Pedido não pode ser avaliado / rating inválido }
-        "409": { description: Pedido já avaliado }
-        "404": { description: Pedido não encontrado }
-        "401": { description: Unauthorized }
+        "201":
+          description: Created
+        "400":
+          description: "Pedido não pode ser avaliado / rating inválido"
+        "409":
+          description: "Pedido já avaliado"
+        "404":
+          description: "Pedido não encontrado"
+        "401":
+          description: Unauthorized
 
   /loyalty/summary:
     get:
       summary: Saldo e extrato de pontos
       security: [{ bearerAuth: [] }]
       responses:
-        "200": { description: OK }
-        "401": { description: Unauthorized }
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
 
 components:
   securitySchemes:

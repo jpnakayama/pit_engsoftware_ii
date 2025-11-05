@@ -81,6 +81,21 @@ body {
   color: var(--dark-gray);
 }
 
+.header-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.header-icon-btn:hover .header-icon {
+  color: var(--dark-gray);
+}
+
 /* Navegação inferior */
 .bottom-nav {
   background-color: white;
@@ -1204,6 +1219,561 @@ body {
 
   .page-title {
     font-size: 24px;
+  }
+}
+
+/* Modal de Login */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.login-modal {
+  background-color: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+  text-align: center;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.login-modal-icon {
+  color: var(--pink-logo);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-modal-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.login-modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+.login-modal-message {
+  font-size: 16px;
+  color: var(--gray-text);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.login-modal-submessage {
+  font-size: 14px;
+  color: var(--gray-text);
+  line-height: 1.5;
+  margin-bottom: 32px;
+  opacity: 0.8;
+}
+
+.login-modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.login-modal-btn-primary {
+  background-color: var(--pink-logo);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 160px;
+}
+
+.login-modal-btn-primary:hover {
+  background-color: #ff4d9e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+}
+
+.login-modal-btn-primary:active {
+  transform: translateY(0);
+}
+
+.login-modal-btn-secondary {
+  background-color: white;
+  color: var(--gray-text);
+  border: 2px solid var(--medium-gray);
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 160px;
+}
+
+.login-modal-btn-secondary:hover {
+  background-color: var(--light-gray);
+  border-color: var(--gray-text);
+}
+
+.login-modal-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Responsividade do Modal */
+@media (max-width: 768px) {
+  .login-modal {
+    padding: 32px 24px;
+    margin: 20px;
+  }
+
+  .login-modal-title {
+    font-size: 20px;
+  }
+
+  .login-modal-message {
+    font-size: 15px;
+  }
+
+  .login-modal-submessage {
+    font-size: 13px;
+  }
+
+  .login-modal-buttons {
+    flex-direction: column;
+  }
+
+  .login-modal-btn-primary,
+  .login-modal-btn-secondary {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* Modal Genérico (Error, Success, Warning, Info) */
+.generic-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.generic-modal {
+  background-color: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+  text-align: center;
+}
+
+.generic-modal-icon {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.generic-modal-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.generic-modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+.generic-modal-message {
+  font-size: 16px;
+  color: var(--gray-text);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.generic-modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.generic-modal-btn-primary {
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 160px;
+}
+
+.generic-modal-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0.9;
+}
+
+.generic-modal-btn-primary:active {
+  transform: translateY(0);
+}
+
+.generic-modal-btn-secondary {
+  background-color: white;
+  color: var(--gray-text);
+  border: 2px solid var(--medium-gray);
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 160px;
+}
+
+.generic-modal-btn-secondary:hover {
+  background-color: var(--light-gray);
+  border-color: var(--gray-text);
+}
+
+.generic-modal-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Responsividade do Modal Genérico */
+@media (max-width: 768px) {
+  .generic-modal {
+    padding: 32px 24px;
+    margin: 20px;
+  }
+
+  .generic-modal-title {
+    font-size: 20px;
+  }
+
+  .generic-modal-message {
+    font-size: 15px;
+  }
+
+  .generic-modal-buttons {
+    flex-direction: column;
+  }
+
+  .generic-modal-btn-primary,
+  .generic-modal-btn-secondary {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* Sistema de Notificações */
+.notification-area {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  max-width: 600px;
+  width: 90%;
+  pointer-events: none;
+}
+
+.notification {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid #4361ee;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notification-info {
+  border-left-color: #4361ee;
+  background-color: #e7f1ff;
+}
+
+.notification-success {
+  border-left-color: #52b788;
+  background-color: #e8f5e9;
+}
+
+.notification-warning {
+  border-left-color: #ffd60a;
+  background-color: #fff9e6;
+}
+
+.notification-error {
+  border-left-color: #e63946;
+  background-color: #ffeaea;
+}
+
+/* Sistema de Estrelas para Avaliação */
+.star-rating {
+  display: flex;
+  gap: 8px;
+  font-size: 32px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.star {
+  color: #ddd;
+  transition: color 0.2s ease, transform 0.1s ease;
+  display: inline-block;
+}
+
+.star:hover {
+  transform: scale(1.2);
+}
+
+.star.active {
+  color: #ffd60a;
+}
+
+.star-rating:hover .star {
+  color: #ffd60a;
+  opacity: 0.5;
+}
+
+.star-rating:hover .star.active {
+  opacity: 1;
+}
+
+/* Estilos para Programa de Fidelidade */
+.loyalty-balance-card {
+  background: linear-gradient(135deg, #ff69b4 0%, #ff4d9e 100%) !important;
+  background-color: #ff69b4 !important;
+  color: white !important;
+  position: relative !important;
+}
+
+.loyalty-balance-card h3,
+.loyalty-balance-card .mb-2,
+.loyalty-balance-card h3.mb-2 {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+}
+
+.loyalty-balance-card #saldo {
+  color: #ffffff !important;
+  visibility: visible !important;
+  display: block !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Garantir que todos os elementos filhos tenham cor branca */
+.loyalty-balance-card > * {
+  color: #ffffff !important;
+}
+
+/* Modal de Quantidade para Produtos */
+.quantity-modal {
+  position: absolute;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quantity-modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  border: 1px solid #e0e0e0;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.quantity-btn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--pink-logo);
+  background: white;
+  color: var(--pink-logo);
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.quantity-btn:hover {
+  background: var(--pink-logo);
+  color: white;
+  transform: scale(1.05);
+}
+
+.quantity-btn:active {
+  transform: scale(0.95);
+}
+
+.quantity-input {
+  width: 60px;
+  height: 36px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantity-input:focus {
+  outline: none;
+  border-color: var(--pink-logo);
+}
+
+.quantity-modal-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-quantity-confirm {
+  flex: 1;
+  background: var(--pink-logo);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quantity-confirm:hover {
+  background: #ff4d9e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
+}
+
+.btn-quantity-confirm:active {
+  transform: translateY(0);
+}
+
+.btn-quantity-cancel {
+  flex: 1;
+  background: white;
+  color: var(--gray-text);
+  border: 2px solid #e0e0e0;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quantity-cancel:hover {
+  background: var(--light-gray);
+  border-color: var(--gray-text);
+}
+
+.btn-quantity-cancel:active {
+  transform: scale(0.98);
+}
+
+/* Responsividade do modal de quantidade */
+@media (max-width: 768px) {
+  .quantity-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+    right: auto !important;
   }
 }
 
