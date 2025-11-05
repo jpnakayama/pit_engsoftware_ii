@@ -19,12 +19,12 @@
 
 <p align="center">
   <img src="./checkout.png" alt="Checkout Pix (retirada)" width="800"><br>
-  <em>Checkout Pix — retirada com bônus</em>
+  <em>Acompanhamento do pedido - Antes da entrega </em>
 </p>
 
 <p align="center">
   <img src="./pedido.png" alt="Pedido — após pagamento (preparing)" width="800"><br>
-  <em>Pedido — após pagamento (status: preparing)</em>
+  <em>Acompanhamento do pedido - Após a entrega -> Avaliação</em>
 </p>
 
 <p align="center">
