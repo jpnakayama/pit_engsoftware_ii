@@ -1,23 +1,41 @@
-# Protótipos de Telas (IHC)
+# Protótipos / Prints das Telas (MVP)
 
-> (Insira aqui as imagens quando prontas)
-> - login.png
-> - vitrine.png
-> - carrinho.png
-> - checkout.png
-> - pedido.png
-> - fidelidade.png
+> Telas reais do MVP rodando localmente.
 
-## Descrição das Telas
-- **Login:** formulário de e-mail/senha; link para cadastro.
-- **Vitrine:** lista de produtos com preço e botão “Adicionar”.
-- **Carrinho:** itens, subtotal, seleção de `delivery_type`, botão “Checkout Pix”.
-- **Checkout:** instruções de pagamento; confirmação e redirecionamento ao pedido.
-- **Pedido:** status atual, botões de avanço (simulação), área de avaliação (1..5 + comentário).
-- **Fidelidade:** saldo total e extrato (últimos lançamentos).
+<p align="center">
+  <img src="./login.png" alt="Login" width="800"><br>
+  <em>Login</em>
+</p>
 
-## Diretrizes de IHC aplicadas
-- **Clareza:** rótulos diretos; feedback de erro simples.
-- **Consistência:** botões/cores e navegação estáveis.
-- **Simplicidade:** fluxo linear de compra; poucas decisões por tela.
-- **Feedback:** mensagens de estado (OK/Erro), status do pedido, confirmação de avaliação.
+<p align="center">
+  <img src="./vitrine.png" alt="Vitrine de produtos" width="800"><br>
+  <em>Vitrine</em>
+</p>
+
+<p align="center">
+  <img src="./carrinho.png" alt="Carrinho com itens" width="800"><br>
+  <em>Carrinho</em>
+</p>
+
+<p align="center">
+  <img src="./checkout.png" alt="Checkout Pix (retirada)" width="800"><br>
+  <em>Checkout Pix — retirada com bônus</em>
+</p>
+
+<p align="center">
+  <img src="./pedido.png" alt="Pedido — após pagamento (preparing)" width="800"><br>
+  <em>Pedido — após pagamento (status: preparing)</em>
+</p>
+
+<p align="center">
+  <img src="./fidelidade.png" alt="Fidelidade — saldo e extrato" width="800"><br>
+  <em>Fidelidade — saldo e extrato</em>
+</p>
+
+---
+
+## Observações de IHC aplicadas
+- **Clareza:** rótulos diretos e feedbacks objetivos.
+- **Consistência:** mesma barra de topo e padrões de botão.
+- **Simplicidade:** fluxo linear compra → pagamento → status → avaliação.
+- **Feedback:** estados e mensagens de erro previstas (ver `docs/ihc/mensagens-erro.md`).
