@@ -10,7 +10,7 @@
 - Tests: **9** | Passaram: **9** | Falharam: **0**
 
 **Cobertura:**
-- Lines: **—** | Stmts: **—** | Branches: **—** | Funcs: **—**
+- Lines: **86.52% ( 244/282 )** | Stmts: **77.88% ( 250/321 )** | Branches: **63.96% ( 71/111 )** | Funcs: **90.47% ( 38/42 )**
 
 **Artefatos:**
 - Saída: `docs/evidencias/automatizados/20251106-153721/jest-run.txt`
