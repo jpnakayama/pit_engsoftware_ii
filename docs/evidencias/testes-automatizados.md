@@ -1,5 +1,25 @@
 # Evidências — Testes Automatizados (PIT II)
 
+## Execução 20251106-153721
+
+**Commit:** `7f298d7`  
+**Ambiente:** Node `v22.15.0` / NPM `10.9.2`  
+
+**Resultados:**
+- Suites: **6**
+- Tests: **9** | Passaram: **9** | Falharam: **0**
+
+**Cobertura:**
+- Lines: **—** | Stmts: **—** | Branches: **—** | Funcs: **—**
+
+**Artefatos:**
+- Saída: `docs/evidencias/automatizados/20251106-153721/jest-run.txt`
+- JSON: `docs/evidencias/automatizados/20251106-153721/jest-run.json`
+- Cobertura (resumo): `docs/evidencias/automatizados/20251106-153721/jest-coverage-summary.txt`
+- Cobertura (HTML): `docs/evidencias/automatizados/20251106-153721/coverage/lcov-report/index.html`
+
+---
+
 ## Execução 20251102-224911
 
 **Commit:** `60b650c`  
@@ -34,4 +54,4 @@ Este documento comprova execuções de testes com saída e cobertura versionadas
 ```bash
     chmod +x scripts/capture-tests.sh
     ./scripts/capture-tests.sh
-```
+```| 20251106-153721 | 7f298d7 | 6 | 9 | — | Execução automatizada |
