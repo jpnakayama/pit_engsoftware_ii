@@ -36,6 +36,59 @@ app.use('/', routes);
    Erros de validação (celebrate/joi)
    -> precisa vir DEPOIS das rotas
 -------------------------- */
+// Middleware customizado para tratar erros do Celebrate antes do handler padrão
+app.use((err, req, res, next) => {
+  // Verificar se é erro do Celebrate
+  if (err.isJoi || err.isCelebrate || err.name === 'ValidationError') {
+    let message = 'Dados inválidos';
+    
+    // Tentar extrair detalhes do erro
+    let allErrors = [];
+    
+    // Formato do Celebrate: err.details pode ser Map ou objeto
+    if (err.details) {
+      if (err.details instanceof Map) {
+        // Se for Map, iterar sobre os valores
+        err.details.forEach((value) => {
+          if (Array.isArray(value)) {
+            allErrors.push(...value);
+          }
+        });
+      } else if (typeof err.details === 'object') {
+        // Se for objeto, verificar body, params, query
+        if (err.details.body) allErrors.push(...err.details.body);
+        if (err.details.params) allErrors.push(...err.details.params);
+        if (err.details.query) allErrors.push(...err.details.query);
+      }
+    }
+    
+    // Se não encontrou em details, tentar em joi.details
+    if (allErrors.length === 0 && err.joi && err.joi.details) {
+      allErrors = err.joi.details;
+    }
+    
+    // Procurar erro de senha primeiro
+    if (allErrors.length > 0) {
+      const passwordError = allErrors.find(e => {
+        const path = Array.isArray(e.path) ? e.path : (e.path ? [e.path] : []);
+        return path.some(p => String(p).includes('password'));
+      });
+      
+      if (passwordError && passwordError.message) {
+        message = passwordError.message;
+      } else if (allErrors[0].message) {
+        message = allErrors[0].message;
+      }
+    }
+    
+    return res.status(400).json({ message });
+  }
+  
+  // Se não for erro do Celebrate, passar para o próximo handler
+  next(err);
+});
+
+// Handler padrão do Celebrate para outros casos
 app.use(errors());
 
 /* -------------------------

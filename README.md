@@ -23,6 +23,12 @@ Backend Node/Express + Sequelize; páginas HTML mínimas servidas pelo próprio 
 ### Evidências
 - **Testes automatizados (saída + cobertura)**: [`docs/evidencias/testes-automatizados.md`](docs/evidencias/testes-automatizados.md)
 
+##### Vídeo e Validação de Colegas
+- **Vídeo (YouTube):** ver `docs/video/link.txt`
+- **PDF — 5 opiniões/testes de colegas:** `docs/evidencias/validacao-colegas.pdf`
+- **Relatos individuais (Markdown):** `docs/evidencias/testes-colegas/`
+- **Resumo consolidado:** `docs/evidencias/validacao-resumo.md`
+
 ---
 
 ## 🚀 Como rodar

@@ -2,7 +2,7 @@ const { Order, Review } = require('../models');
 
 async function create(req, res, next) {
   try {
-    const { id } = req.params; // order id
+    const { id } = req.params; // order id ou hash_code
     const { rating, comment } = req.body;
 
     const r = Number(rating);
@@ -10,7 +10,17 @@ async function create(req, res, next) {
       return res.status(400).json({ message: 'rating deve estar entre 1 e 5' });
     }
 
-    const order = await Order.findOne({ where: { id: id, user_id: req.user.id } });
+    // Buscar por id ou hash_code
+    const { Op } = require('sequelize');
+    const order = await Order.findOne({ 
+      where: { 
+        [Op.or]: [
+          { id: isNaN(id) ? null : Number(id) },
+          { hash_code: id }
+        ],
+        user_id: req.user.id 
+      } 
+    });
     if (!order) return res.status(404).json({ message: 'Pedido não encontrado' });
 
     // Regra: só permite avaliar pedido pronto/entregue

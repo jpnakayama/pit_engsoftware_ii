@@ -47,11 +47,26 @@ async function getCart(userId) {
   return { order, items, subtotal };
 }
 
-function calcBonus(delivery_type) {
-  return delivery_type === 'retirada' ? 200 : 0; // R$2,00
+function calcBonus(delivery_type, payment_method) {
+  // Bônus de R$ 2,00 apenas para retirada com PIX
+  return (delivery_type === 'retirada' && payment_method === 'pix') ? 200 : 0; // R$2,00
 }
 
-async function checkoutPix(userId, { delivery_type }) {
+// Função para gerar hash aleatório: letra, 3 números, letra
+function generateHashCode() {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  
+  const letter1 = letters[Math.floor(Math.random() * letters.length)];
+  const num1 = numbers[Math.floor(Math.random() * numbers.length)];
+  const num2 = numbers[Math.floor(Math.random() * numbers.length)];
+  const num3 = numbers[Math.floor(Math.random() * numbers.length)];
+  const letter2 = letters[Math.floor(Math.random() * letters.length)];
+  
+  return `${letter1}${num1}${num2}${num3}${letter2}`;
+}
+
+async function checkoutPix(userId, { delivery_type, payment_method }) {
   if (!['retirada','delivery'].includes(delivery_type || '')) {
     const e = new Error('delivery_type inválido (retirada|delivery)'); e.status = 400; throw e;
   }
@@ -60,16 +75,35 @@ async function checkoutPix(userId, { delivery_type }) {
 
   if (items.length === 0) { const e = new Error('Carrinho vazio'); e.status = 400; throw e; }
 
-  const bonus = calcBonus(delivery_type);
+  const bonus = calcBonus(delivery_type, payment_method);
   const total = Math.max(subtotal - bonus, 0);
 
+  // Gerar hash_code único (com limite de tentativas para evitar loop infinito)
+  let hashCode;
+  let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 100;
+  while (!isUnique && attempts < maxAttempts) {
+    hashCode = generateHashCode();
+    const existing = await Order.findOne({ where: { hash_code: hashCode } });
+    if (!existing) isUnique = true;
+    attempts++;
+  }
+  if (!isUnique) {
+    const e = new Error('Erro ao gerar código único do pedido. Tente novamente.'); 
+    e.status = 500; 
+    throw e;
+  }
+
   order.delivery_type = delivery_type;
+  order.payment_method = payment_method || 'pix';
+  order.hash_code = hashCode;
   order.bonus_cents = bonus;
   order.total_cents = total;
   order.status = 'awaiting_payment';
   await order.save();
 
-  const qrCode = `PIX:ORDER:${order.id}:TOTAL:${total}`; // placeholder
+  const qrCode = `PIX:ORDER:${order.hash_code}:TOTAL:${total}`; // placeholder
 
   return { order, subtotal, total, bonus, qrCode };
 }
@@ -91,10 +125,11 @@ async function confirmPayment(userId, orderId) {
   // Lançar pontos de fidelidade
   const points = calculateLoyaltyPoints(order.total_cents);
   if (points > 0) {
+    const orderIdentifier = order.hash_code || order.id;
     await LoyaltyLedger.create({
       user_id: userId,
       points_delta: points,
-      reason: `Pedido #${order.id} pago`
+      reason: `Pedido #${orderIdentifier} pago`
     });
   }
 
@@ -102,9 +137,27 @@ async function confirmPayment(userId, orderId) {
 }
 
 async function getOrderStatus(userId, orderId) {
-  const order = await Order.findOne({ where: { id: orderId, user_id: userId } });
+  // Buscar por id ou hash_code
+  const order = await Order.findOne({ 
+    where: { 
+      [Op.or]: [
+        { id: isNaN(orderId) ? null : Number(orderId) },
+        { hash_code: orderId }
+      ],
+      user_id: userId 
+    } 
+  });
   if (!order) { const e = new Error('Pedido não encontrado'); e.status = 404; throw e; }
-  return { id: order.id, status: order.status, paid_at: order.paid_at, total_cents: order.total_cents };
+  return { 
+    id: order.id, 
+    hash_code: order.hash_code,
+    status: order.status, 
+    delivery_type: order.delivery_type,
+    payment_method: order.payment_method,
+    bonus_cents: order.bonus_cents,
+    paid_at: order.paid_at, 
+    total_cents: order.total_cents 
+  };
 }
 
 // (opcional) avançar status manualmente

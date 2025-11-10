@@ -14,7 +14,7 @@ async function signup(req, res, next) {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password || String(password).length < 8) {
-      return res.status(400).json({ message: 'Dados inválidos (senha >= 8).' });
+      return res.status(400).json({ message: 'Essa senha não atende aos requisitos' });
     }
 
     const exists = await User.findOne({ where: { email } });
@@ -39,10 +39,10 @@ async function login(req, res, next) {
       return res.status(400).json({ message: 'Informe e-mail e senha.' });
 
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(401).json({ message: 'Credenciais inválidas.' });
+    if (!user) return res.status(401).json({ message: 'Usuário e/ou senha incorretos' });
 
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ message: 'Credenciais inválidas.' });
+    if (!ok) return res.status(401).json({ message: 'Usuário e/ou senha incorretos' });
 
     const token = signToken({ id: user.id, name: user.name, email: user.email });
     return res.json({

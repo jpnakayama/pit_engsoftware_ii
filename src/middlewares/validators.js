@@ -5,8 +5,14 @@ const authSignup = celebrate({
   [Segments.BODY]: Joi.object({
     name: Joi.string().min(2).max(80).required(),
     email: Joi.string().email().required(),
-    password: Joi.string().min(8).required()
+    password: Joi.string().min(8).required().messages({
+      'string.min': 'Essa senha não atende aos requisitos',
+      'any.required': 'Essa senha não atende aos requisitos',
+      'string.empty': 'Essa senha não atende aos requisitos'
+    })
   })
+}, {
+  abortEarly: false
 });
 
 const authLogin = celebrate({
@@ -34,13 +40,17 @@ const cartAddItem = celebrate({
 
 const checkoutPix = celebrate({
   [Segments.BODY]: Joi.object({
-    delivery_type: Joi.string().valid('retirada', 'delivery').required()
+    delivery_type: Joi.string().valid('retirada', 'delivery').required(),
+    payment_method: Joi.string().valid('pix', 'credit_card').optional()
   })
 });
 
 const orderIdParam = celebrate({
   [Segments.PARAMS]: Joi.object({
-    id: Joi.number().integer().min(1).required()
+    id: Joi.alternatives().try(
+      Joi.number().integer().min(1),
+      Joi.string().min(1).max(20)
+    ).required()
   })
 });
 

@@ -36,7 +36,13 @@
               <div class="col-md-6">
                 <h5 class="card-title">Informações do Pedido</h5>
                 <p class="mb-2"><strong>Status:</strong> <span id="orderStatus" class="badge bg-primary"></span></p>
-                <p class="mb-3"><strong>Total:</strong> <span id="orderTotal" class="fw-bold"></span></p>
+                <p class="mb-2" id="paymentMethodInfo" style="display: none;"><strong>Método de Pagamento:</strong> <span id="paymentMethodText"></span></p>
+                <p class="mb-2" id="deliveryTypeInfo" style="display: none;"><strong>Tipo de Entrega:</strong> <span id="deliveryTypeText"></span></p>
+                <p class="mb-3" id="orderTotalInfo">
+                  <strong>Subtotal:</strong> <span id="orderSubtotal" class="fw-bold"></span><br>
+                  <span id="orderDiscount" style="display: none;" class="text-success"></span>
+                  <strong>Total:</strong> <span id="orderTotal" class="fw-bold"></span>
+                </p>
                 <div id="payButtonContainer">
                   <button class="btn btn-success" id="btnPay">Confirmar Pagamento</button>
                 </div>
@@ -119,6 +125,9 @@
         const orders = await api('/orders');
         const select = document.getElementById('orderSelect');
         
+        // Preservar seleção atual
+        const currentValue = select.value;
+        
         if (orders.length === 0) {
           select.innerHTML = '<option value="">Nenhum pedido encontrado</option>';
           return;
@@ -126,19 +135,24 @@
 
         select.innerHTML = '<option value="">Selecione um pedido...</option>';
         orders.forEach(order => {
-          const statusText = getStatusText(order.status);
+          const statusText = getStatusText(order.status, order.delivery_type);
+          const orderIdentifier = order.hash_code || order.id;
           const option = document.createElement('option');
-          option.value = order.id;
-          option.textContent = `Pedido #${order.id} - ${statusText}`;
+          option.value = order.hash_code || order.id;
+          option.textContent = `Pedido #${orderIdentifier} - ${statusText}`;
           select.appendChild(option);
         });
 
-        // Se houver ID na URL, selecionar automaticamente
-        const params = new URLSearchParams(location.search);
-        const initialId = params.get('id');
-        if (initialId) {
-          select.value = initialId;
-          loadOrderDetails(initialId);
+        // Restaurar seleção anterior ou selecionar da URL
+        if (currentValue) {
+          select.value = currentValue;
+        } else {
+          const params = new URLSearchParams(location.search);
+          const initialId = params.get('id');
+          if (initialId) {
+            select.value = initialId;
+            loadOrderDetails(initialId);
+          }
         }
       } catch (err) {
         // Erro já é tratado pelo api()
@@ -146,7 +160,16 @@
     }
 
     // Função para obter texto do status
-    function getStatusText(status) {
+    function getStatusText(status, deliveryType) {
+      // Se for retirada e status ready, mostrar "Pronto para retirada"
+      if (status === 'ready' && deliveryType === 'retirada') {
+        return 'Pronto para retirada';
+      }
+      // Se for retirada e status delivered, mostrar "Retirado" ao invés de "Entregue"
+      if (status === 'delivered' && deliveryType === 'retirada') {
+        return 'Retirado';
+      }
+      
       const statusMap = {
         'created': 'Criado',
         'awaiting_payment': 'Aguardando Pagamento',
@@ -183,22 +206,69 @@
       try {
         const status = await api('/orders/' + orderId + '/status');
         const orders = await api('/orders');
-        const order = orders.find(o => o.id === Number(orderId));
+        // Buscar por id ou hash_code
+        const order = orders.find(o => o.id === Number(orderId) || o.hash_code === orderId);
 
         if (!order) {
           showModal('error', 'Erro', 'Pedido não encontrado', { showCancel: false });
           return;
         }
 
-        currentOrderId = orderId;
+        currentOrderId = order.hash_code || order.id;
         lastStatus = status.status;
 
         // Mostrar informações do pedido
-        document.getElementById('orderStatus').textContent = getStatusText(status.status);
+        const statusText = getStatusText(status.status, status.delivery_type);
+        document.getElementById('orderStatus').textContent = statusText;
         document.getElementById('orderStatus').className = `badge ${getStatusBadgeClass(status.status)}`;
         
-        const total = order.total_cents ? fmtBRL(order.total_cents) : 'R$ 0,00';
-        document.getElementById('orderTotal').textContent = total;
+        // Método de pagamento
+        const paymentMethodInfo = document.getElementById('paymentMethodInfo');
+        const paymentMethodText = document.getElementById('paymentMethodText');
+        if (order.payment_method || status.payment_method) {
+          const paymentMethod = order.payment_method || status.payment_method;
+          const paymentMethodNames = {
+            'pix': 'PIX',
+            'credit_card': 'Cartão de Crédito'
+          };
+          paymentMethodText.textContent = paymentMethodNames[paymentMethod] || paymentMethod;
+          paymentMethodInfo.style.display = 'block';
+        } else {
+          paymentMethodInfo.style.display = 'none';
+        }
+        
+        // Tipo de entrega
+        const deliveryTypeInfo = document.getElementById('deliveryTypeInfo');
+        const deliveryTypeText = document.getElementById('deliveryTypeText');
+        if (order.delivery_type || status.delivery_type) {
+          const deliveryType = order.delivery_type || status.delivery_type;
+          const deliveryTypeNames = {
+            'retirada': 'Retirada',
+            'delivery': 'Delivery'
+          };
+          deliveryTypeText.textContent = deliveryTypeNames[deliveryType] || deliveryType;
+          deliveryTypeInfo.style.display = 'block';
+        } else {
+          deliveryTypeInfo.style.display = 'none';
+        }
+        
+        // Calcular subtotal e total com desconto
+        const bonus = order.bonus_cents || status.bonus_cents || 0;
+        const total = order.total_cents ? order.total_cents : 0;
+        const subtotal = total + bonus; // Subtotal = total + desconto
+        
+        document.getElementById('orderSubtotal').textContent = fmtBRL(subtotal);
+        
+        // Mostrar desconto se houver
+        const orderDiscount = document.getElementById('orderDiscount');
+        if (bonus > 0) {
+          orderDiscount.innerHTML = `<strong>Desconto:</strong> <span class="text-success">-${fmtBRL(bonus)}</span><br>`;
+          orderDiscount.style.display = 'inline';
+        } else {
+          orderDiscount.style.display = 'none';
+        }
+        
+        document.getElementById('orderTotal').textContent = fmtBRL(total);
 
         // Mostrar/esconder botão de pagamento
         const payButtonContainer = document.getElementById('payButtonContainer');
@@ -208,10 +278,12 @@
           payButtonContainer.style.display = 'none';
         }
 
-        // Mostrar itens
+        // Mostrar itens PRIMEIRO (antes da avaliação)
         const itemsBody = document.getElementById('orderItemsBody');
         itemsBody.innerHTML = '';
-        if (order.items && order.items.length > 0) {
+        // Debug: verificar se os itens estão vindo
+        console.log('Order items:', order.items);
+        if (order.items && Array.isArray(order.items) && order.items.length > 0) {
           order.items.forEach(item => {
             const tr = document.createElement('tr');
             const productName = item.Product ? item.Product.name : `Produto #${item.product_id}`;
@@ -228,11 +300,47 @@
         } else {
           itemsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum item encontrado</td></tr>';
         }
+        
+        // Exibir avaliação DEPOIS dos itens
+        const reviewInfo = document.getElementById('reviewInfo');
+        if (order.review) {
+          if (!reviewInfo) {
+            // Criar elemento para exibir avaliação após a seção de itens
+            const reviewDiv = document.createElement('div');
+            reviewDiv.id = 'reviewInfo';
+            reviewDiv.className = 'mt-3 p-3 bg-light rounded';
+            reviewDiv.innerHTML = `
+              <h6 class="mb-2">Avaliação do Pedido</h6>
+              <div class="mb-2">
+                <strong>Nota:</strong> 
+                <span class="text-warning">${'★'.repeat(order.review.rating)}${'☆'.repeat(5 - order.review.rating)}</span>
+                <span class="ms-2">(${order.review.rating}/5)</span>
+              </div>
+              ${order.review.comment ? `<div><strong>Comentário:</strong> <p class="mb-0 mt-1">${order.review.comment}</p></div>` : ''}
+            `;
+            // Inserir após a div orderItems
+            const orderItemsDiv = document.getElementById('orderItems');
+            orderItemsDiv.parentNode.insertBefore(reviewDiv, orderItemsDiv.nextSibling);
+          } else {
+            // Atualizar avaliação existente
+            reviewInfo.innerHTML = `
+              <h6 class="mb-2">Avaliação do Pedido</h6>
+              <div class="mb-2">
+                <strong>Nota:</strong> 
+                <span class="text-warning">${'★'.repeat(order.review.rating)}${'☆'.repeat(5 - order.review.rating)}</span>
+                <span class="ms-2">(${order.review.rating}/5)</span>
+              </div>
+              ${order.review.comment ? `<div><strong>Comentário:</strong> <p class="mb-0 mt-1">${order.review.comment}</p></div>` : ''}
+            `;
+          }
+        } else if (reviewInfo) {
+          reviewInfo.remove();
+        }
 
         document.getElementById('orderInfo').style.display = 'block';
 
-        // Mostrar seção de avaliação apenas para pedidos entregues
-        const canReview = status.status === 'delivered';
+        // Mostrar seção de avaliação apenas para pedidos entregues e que ainda não foram avaliados
+        const canReview = status.status === 'delivered' && !order.review;
         document.getElementById('reviewSection').style.display = canReview ? 'block' : 'none';
 
         // Iniciar polling se o pedido estiver em andamento
@@ -260,10 +368,13 @@
           
           // Se o status mudou, mostrar notificação
           if (status.status !== lastStatus) {
-            const oldStatusText = getStatusText(lastStatus);
-            const newStatusText = getStatusText(status.status);
+            const oldStatusText = getStatusText(lastStatus, status.delivery_type);
+            const newStatusText = getStatusText(status.status, status.delivery_type);
             showNotification(`Status do pedido alterado: ${oldStatusText} → ${newStatusText}`, 'info');
             lastStatus = status.status;
+            
+            // Recarregar lista de pedidos para atualizar dropdown
+            loadOrders();
             
             // Recarregar detalhes do pedido
             loadOrderDetails(currentOrderId);
@@ -332,6 +443,8 @@
         
         // Aguardar um pouco e recarregar status
         setTimeout(() => {
+          // Recarregar lista de pedidos para atualizar dropdown
+          loadOrders();
           loadOrderDetails(currentOrderId);
         }, 1000);
       } catch (err) {
@@ -351,7 +464,11 @@
               method: 'POST', 
               body: JSON.stringify({ next_status: 'ready' }) 
             });
-            showNotification('Status do pedido alterado: Preparando → Pronto', 'info');
+            const statusData = await api('/orders/' + currentOrderId + '/status');
+            const statusText = getStatusText('ready', statusData.delivery_type);
+            showNotification(`Status do pedido alterado: Preparando → ${statusText}`, 'info');
+            // Recarregar lista de pedidos para atualizar dropdown
+            loadOrders();
             loadOrderDetails(currentOrderId);
           } catch (err) {
             // Erro silencioso
@@ -365,7 +482,11 @@
               method: 'POST', 
               body: JSON.stringify({ next_status: 'delivered' }) 
             });
-            showNotification('Status do pedido alterado: Pronto → Entregue', 'success');
+            const statusData = await api('/orders/' + currentOrderId + '/status');
+            const statusText = getStatusText('delivered', statusData.delivery_type);
+            showNotification(`Status do pedido alterado: Pronto → ${statusText}`, 'success');
+            // Recarregar lista de pedidos para atualizar dropdown
+            loadOrders();
             loadOrderDetails(currentOrderId);
           } catch (err) {
             // Erro silencioso
@@ -383,8 +504,7 @@
 
     // Enviar avaliação
     async function review() {
-      const orderId = document.getElementById('orderSelect').value;
-      if (!orderId) {
+      if (!currentOrderId) {
         showModal('warning', 'Atenção', 'Selecione um pedido primeiro', { showCancel: false });
         return;
       }
@@ -392,12 +512,14 @@
       try {
         const rating = parseInt(document.getElementById('rating').value);
         const comment = document.getElementById('comment').value;
-        await api('/orders/' + orderId + '/review', { method: 'POST', body: JSON.stringify({ rating, comment }) });
+        await api('/orders/' + currentOrderId + '/review', { method: 'POST', body: JSON.stringify({ rating, comment }) });
         showModal('success', 'Avaliação enviada!', 'Sua avaliação foi registrada com sucesso. Obrigado!', { showCancel: false });
-        // Limpar campos
+        // Limpar campos e recarregar detalhes do pedido para mostrar a avaliação
         document.getElementById('rating').value = 5;
         document.getElementById('comment').value = '';
         highlightStars(5, true);
+        // Recarregar detalhes do pedido para exibir a avaliação
+        loadOrderDetails(currentOrderId);
       } catch (err) {
         // Erro já é tratado pelo api()
       }
