@@ -5,7 +5,7 @@
 
 ## Participantes e arquivos
 - 01 — Bruno — 07/11/2025 `docs/evidencias/testes-colegas/12-bruno-07-11-2025.md`
-- 02 — Flávia — 07/11/2025 → `docs/evidencias/testes-colegas/02-flavia-07-11-2028.md`
+- 02 — Flávia — 07/11/2025 → `docs/evidencias/testes-colegas/02-flavia-07-11-2025.md`
 - 03 — Rodrigo — 10/11/2025 → `docs/evidencias/testes-colegas/03-rodrigo-10-11-2025.md`
 - 04 — Sabrina — 10/11/2025 → `docs/evidencias/testes-colegas/04-sabrina-10-11-2025.md`
 - 05 — Vanessa — 10/11/2025 → `docs/evidencias/testes-colegas/05-vanessa-10-11-2025.md`
