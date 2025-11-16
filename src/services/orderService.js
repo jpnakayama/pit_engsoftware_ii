@@ -36,6 +36,48 @@ async function removeItemFromCart(userId, orderItemId) {
   return true;
 }
 
+async function updateItemQuantity(userId, orderItemId, newQuantity) {
+  if (!newQuantity || newQuantity < 1) {
+    const e = new Error('Quantidade inválida'); e.status = 400; throw e;
+  }
+  
+  const order = await getOrCreateCart(userId);
+  const item = await OrderItem.findOne({ where: { id: orderItemId, order_id: order.id } });
+  if (!item) { const e = new Error('Item não encontrado no carrinho'); e.status = 404; throw e; }
+  
+  item.quantity = newQuantity;
+  await item.save();
+  return item;
+}
+
+async function decreaseItemQuantity(userId, productId) {
+  const order = await getOrCreateCart(userId);
+  
+  // Buscar todos os itens deste produto no carrinho
+  const items = await OrderItem.findAll({
+    where: { order_id: order.id, product_id: productId },
+    order: [['id', 'ASC']]
+  });
+  
+  if (items.length === 0) {
+    const e = new Error('Item não encontrado no carrinho'); e.status = 404; throw e;
+  }
+  
+  // Encontrar o primeiro item com quantity > 1 ou o primeiro item
+  let itemToUpdate = items.find(i => i.quantity > 1);
+  
+  if (itemToUpdate) {
+    // Diminuir quantidade em 1
+    itemToUpdate.quantity -= 1;
+    await itemToUpdate.save();
+    return { updated: true, item: itemToUpdate };
+  } else {
+    // Se todos têm quantity = 1, remover o primeiro
+    await items[0].destroy();
+    return { updated: true, removed: true };
+  }
+}
+
 async function getCart(userId) {
   const order = await getOrCreateCart(userId);
   const items = await OrderItem.findAll({
@@ -191,5 +233,5 @@ module.exports = {
   // já exportados antes:
   getOrCreateCart, addItemToCart, removeItemFromCart, getCart, checkoutPix,
   // novos:
-  confirmPayment, getOrderStatus, advanceStatus
+  confirmPayment, getOrderStatus, advanceStatus, updateItemQuantity, decreaseItemQuantity
 };

@@ -23,4 +23,22 @@ async function removeItem(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { addItem, list, removeItem };
+async function updateItem(req, res, next) {
+  try {
+    const { quantity } = req.body;
+    const item = await service.updateItemQuantity(req.user.id, Number(req.params.id), quantity);
+    const cart = await service.getCart(req.user.id);
+    res.json({ ok: true, item, cart });
+  } catch (err) { next(err); }
+}
+
+async function decreaseItem(req, res, next) {
+  try {
+    const productId = Number(req.params.productId);
+    const result = await service.decreaseItemQuantity(req.user.id, productId);
+    const cart = await service.getCart(req.user.id);
+    res.json({ ok: true, ...result, cart });
+  } catch (err) { next(err); }
+}
+
+module.exports = { addItem, list, removeItem, updateItem, decreaseItem };

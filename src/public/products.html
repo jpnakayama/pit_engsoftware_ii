@@ -269,7 +269,7 @@
       api('/cart/items', { method: 'POST', body: JSON.stringify({ product_id: currentProductId, quantity: currentQuantity }) })
         .then(() => {
           closeQuantityModal();
-          showModal('success', 'Sucesso!', `${currentQuantity} item(ns) adicionado(s) ao carrinho!`, { showCancel: false });
+          showToast(`${currentQuantity} item(ns) adicionado(s) ao carrinho!`, 'success');
         })
         .catch(err => {
           // Erro já é tratado pelo api() que mostra modal automaticamente

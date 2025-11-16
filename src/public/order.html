@@ -281,17 +281,32 @@
         // Mostrar itens PRIMEIRO (antes da avaliação)
         const itemsBody = document.getElementById('orderItemsBody');
         itemsBody.innerHTML = '';
-        // Debug: verificar se os itens estão vindo
-        console.log('Order items:', order.items);
+        
         if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+          // Agrupar itens pelo product_id (mesma lógica do carrinho)
+          const groupedItems = {};
           order.items.forEach(item => {
+            const productId = item.product_id;
+            if (!groupedItems[productId]) {
+              groupedItems[productId] = {
+                product_id: productId,
+                name: item.Product ? item.Product.name : `Produto #${productId}`,
+                unit_price_cents: item.unit_price_cents,
+                total_quantity: 0
+              };
+            }
+            groupedItems[productId].total_quantity += item.quantity;
+          });
+          
+          // Renderizar itens agrupados
+          Object.values(groupedItems).forEach(item => {
             const tr = document.createElement('tr');
-            const productName = item.Product ? item.Product.name : `Produto #${item.product_id}`;
             const unitPrice = fmtBRL(item.unit_price_cents);
-            const subtotal = fmtBRL(item.unit_price_cents * item.quantity);
+            const totalPrice = item.total_quantity * item.unit_price_cents;
+            const subtotal = fmtBRL(totalPrice);
             tr.innerHTML = `
-              <td>${productName}</td>
-              <td>${item.quantity}</td>
+              <td>${item.name}</td>
+              <td>${item.total_quantity}</td>
               <td>${unitPrice}</td>
               <td>${subtotal}</td>
             `;

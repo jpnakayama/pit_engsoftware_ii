@@ -216,10 +216,123 @@ function getMenuHTML(activePage = '') {
   `;
 }
 
+// Sistema de Toast
+function showToast(message, type = 'success') {
+  // Remove toast existente se houver
+  const existingToast = document.getElementById('toast-container');
+  if (existingToast) {
+    existingToast.remove();
+  }
+
+  // Cores e ícones por tipo
+  const toastConfig = {
+    success: {
+      color: '#52b788',
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+    },
+    error: {
+      color: '#e63946',
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`
+    },
+    info: {
+      color: '#4361ee',
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`
+    }
+  };
+
+  const config = toastConfig[type] || toastConfig.success;
+
+  // Criar container de toast
+  const toastContainer = document.createElement('div');
+  toastContainer.id = 'toast-container';
+  toastContainer.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease-out;
+  `;
+
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    background-color: white;
+    border-left: 4px solid ${config.color};
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 400px;
+  `;
+
+  toast.innerHTML = `
+    <div style="color: ${config.color}; flex-shrink: 0;">
+      ${config.icon}
+    </div>
+    <div style="flex: 1; color: #333; font-size: 14px; line-height: 1.4;">
+      ${message}
+    </div>
+  `;
+
+  toastContainer.appendChild(toast);
+  document.body.appendChild(toastContainer);
+
+  // Remover após 3 segundos
+  setTimeout(() => {
+    toastContainer.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => {
+      if (toastContainer.parentNode) {
+        toastContainer.remove();
+      }
+    }, 300);
+  }, 3000);
+}
+
+// Adicionar animações CSS para toast
+if (!document.getElementById('toast-styles')) {
+  const style = document.createElement('style');
+  style.id = 'toast-styles';
+  style.textContent = `
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Exporta no escopo global (se quiser acessar via console)
-window.App = { API, setToken, getToken, clearToken, authHeaders, api, fmtBRL, getMenuHTML, showModal, closeGenericModal, logout };
+window.App = { API, setToken, getToken, clearToken, authHeaders, api, fmtBRL, getMenuHTML, showModal, closeGenericModal, logout, showToast };
 
 // Disponibiliza funções globalmente para uso direto
 window.showModal = showModal;
 window.closeGenericModal = closeGenericModal;
 window.logout = logout;
+window.showToast = showToast;

@@ -28,6 +28,8 @@ router.get('/products', v.productsList, ProductController.list);
 router.post('/cart/items', auth, v.cartAddItem, CartController.addItem);
 router.get('/cart', auth, CartController.list);
 router.delete('/cart/items/:id', auth, v.orderIdParam, CartController.removeItem);
+router.put('/cart/items/:id', auth, CartController.updateItem);
+router.post('/cart/items/:productId/decrease', auth, CartController.decreaseItem);
 
 // Checkout
 router.post('/checkout/pix', auth, v.checkoutPix, CheckoutController.pix);
