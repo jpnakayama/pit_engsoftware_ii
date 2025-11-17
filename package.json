@@ -12,7 +12,7 @@
     "db:seed:refresh": "npx sequelize-cli db:seed:undo:all && npx sequelize-cli db:seed:all",
     "test": "jest --runInBand",
     "seed:dev": "node scripts/seed-dev.js",
-    "render:build": "npm run db:migrate && npm run db:seed && echo 'Build complete'",
+    "render:build": "npm install && npm run db:migrate && npm run db:seed",
     "render:start": "node src/server.js"
   },
   "dependencies": {
