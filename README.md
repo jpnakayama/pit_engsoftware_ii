@@ -5,6 +5,12 @@ Backend Node/Express + Sequelize; páginas HTML mínimas servidas pelo próprio 
 
 ---
 
+A versão atual do projeto está publicada e acessível para navegação completa:
+
+👉 https://pit-engsoftware-ii.onrender.com
+
+---
+
 ## 🔗 Documentação do Projeto
 
 - **One-pager**: [`docs/onepager.md`](docs/onepager.md)
