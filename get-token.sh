@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script para extrair token de autenticação
 
-RESPONSE=$(curl -s -X POST https://pit-engsoftware-ii.onrender.com/auth/login \
+RESPONSE=$(curl -s -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$1\",\"password\":\"$2\"}")
 

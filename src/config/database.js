@@ -13,13 +13,12 @@ module.exports = {
   },
   test: {
     dialect: 'sqlite',
-    storage: './prod.sqlite',
+    storage: ':memory:',
     logging: false,
     ...common
   },
   production: {
-    dialect: process.env.DB_DIALECT || 'sqlite',
-    storage: path.join(__dirname, '../prod.sqlite'),
+    dialect: process.env.DB_DIALECT || 'postgres',
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     database: process.env.DB_NAME,

@@ -3,7 +3,7 @@ info:
   title: Cupcakes API (PIT II)
   version: 1.0.0
 servers:
-  - url: https://pit-engsoftware-ii.onrender.com/
+  - url: http://localhost:3000
 paths:
   /health:
     get:

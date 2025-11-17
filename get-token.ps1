@@ -10,7 +10,7 @@ $body = @{
 } | ConvertTo-Json
 
 try {
-    $response = Invoke-RestMethod -Uri "https://pit-engsoftware-ii.onrender.com/auth/login" `
+    $response = Invoke-RestMethod -Uri "http://localhost:3000/auth/login" `
         -Method Post `
         -ContentType "application/json" `
         -Body $body

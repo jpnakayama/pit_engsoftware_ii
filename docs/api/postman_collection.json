@@ -31,7 +31,7 @@
         "url": "{{base}}/loyalty/summary" } }
     ],
     "variable": [
-      { "key": "base", "value": "https://pit-engsoftware-ii.onrender.com/" },
+      { "key": "base", "value": "http://localhost:3000" },
       { "key": "token", "value": "" },
       { "key": "order_id", "value": "1" }
     ]
