@@ -11,7 +11,9 @@
     "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
     "db:seed:refresh": "npx sequelize-cli db:seed:undo:all && npx sequelize-cli db:seed:all",
     "test": "jest --runInBand",
-    "seed:dev": "node scripts/seed-dev.js"
+    "seed:dev": "node scripts/seed-dev.js",
+    "render:build": "npm run db:migrate && npm run db:seed && echo 'Build complete'",
+    "render:start": "node src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

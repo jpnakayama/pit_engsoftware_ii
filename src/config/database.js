@@ -19,6 +19,7 @@ module.exports = {
   },
   production: {
     dialect: process.env.DB_DIALECT || 'sqlite',
+    storage: path.join(__dirname, '../prod.sqlite'),
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     database: process.env.DB_NAME,
