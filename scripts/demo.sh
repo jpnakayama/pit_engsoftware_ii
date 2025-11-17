@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-BASE=${BASE:-http://localhost:3000}
+BASE=${BASE:-https://pit-engsoftware-ii.onrender.com/}
 
 echo "Signup/Login"
 LOGIN=$(curl -s -X POST $BASE/auth/login -H "Content-Type: application/json" \

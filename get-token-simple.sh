@@ -1,7 +1,7 @@
 #!/bin/bash
 # Versão simplificada que funciona no Git Bash do Windows
 
-RESPONSE=$(curl -s -X POST http://localhost:3000/auth/login \
+RESPONSE=$(curl -s -X POST https://pit-engsoftware-ii.onrender.com/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"${1:-cliente@example.com}\",\"password\":\"${2:-minhasenha123}\"}")
 
